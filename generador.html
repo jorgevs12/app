@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Datos - Agenda Core</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="db.js"></script>
+    <style>
+        body {
+            background-image: radial-gradient(circle at 50% -15%, #1c1c1e 0%, #000000 60%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; text-align: center; padding: 20px;
+        }
+        .console-log {
+            background: rgba(0,0,0,0.5); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 15px; width: 100%; max-width: 500px;
+            height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.8rem;
+            text-align: left; margin-top: 20px; color: var(--accent-green);
+        }
+        .btn-gen {
+            background: var(--accent-blue); color: white; border: none;
+            padding: 15px 30px; border-radius: 20px; font-weight: 700; font-size: 1.1rem;
+            cursor: pointer; transition: transform 0.2s; margin-bottom: 10px;
+        }
+        .btn-gen:active { transform: scale(0.95); }
+        .btn-clear {
+            background: rgba(239, 68, 68, 0.2); color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="color: white; margin-bottom: 10px;">Generador de Datos</h1>
+    <p style="color: var(--text-secondary); margin-bottom: 30px;">Crea 1 año de historial y horario completo (8 clases/día).</p>
+
+    <button class="btn-gen" onclick="generateAll()">🚀 Generar Todo</button>
+    <button class="btn-gen btn-clear" onclick="clearAllData()">🗑️ Borrar Todo (Reset)</button>
+
+    <div class="console-log" id="console">Esperando acción...</div>
+    <br>
+    <a href="index.html" style="color:white; text-decoration:none; border-bottom:1px solid var(--accent-blue);">Volver al Dashboard</a>
+
+    <script>
+        const logBox = document.getElementById('console');
+
+        function log(msg) {
+            const div = document.createElement('div');
+            div.innerText = `> ${msg}`;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        async function clearAllData() {
+            if(!confirm("¿Estás seguro? Se borrarán TODOS los datos reales.")) return;
+            
+            await App.init();
+            log("Iniciando limpieza...");
+            
+            const stores = [App.STORES.SALUD, App.STORES.FINANZAS, App.STORES.EVENTOS, App.STORES.NOTAS, App.STORES.HORARIO];
+            
+            for (const store of stores) {
+                const items = await App.read(store);
+                for (const item of items) {
+                    await App.delete(store, item.id);
+                }
+                log(`Limpiado store: ${store}`);
+            }
+            log("Base de datos vacía.");
+        }
+
+        async function generateAll() {
+            await App.init();
+            log("Generando datos... esto puede tardar unos segundos.");
+
+            const now = new Date();
+            const oneYearAgo = new Date();
+            oneYearAgo.setFullYear(now.getFullYear() - 1);
+
+            // --- 1. SALUD (Diario durante 365 días) ---
+            log("Generando Salud (365 días)...");
+            let currentWeight = 85.0; 
+            
+            const healthPromises = [];
+            for (let i = 0; i < 365; i++) {
+                const d = new Date(oneYearAgo);
+                d.setDate(d.getDate() + i);
+                const isoDate = d.toISOString();
+
+                // Generar Actividad
+                const steps = Math.floor(Math.random() * (12000 - 3000) + 3000); 
+                const activeMins = Math.floor(steps * 0.008); 
+                const cal = Math.floor(steps * 0.04 + activeMins * 4);
+
+                healthPromises.push(App.create(App.STORES.SALUD, {
+                    type: 'activity',
+                    fecha: isoDate,
+                    steps: steps,
+                    pasos: steps,
+                    mins: activeMins,
+                    cal: cal
+                }));
+
+                // Generar Peso (Semanal)
+                if (i % 7 === 0) {
+                    const change = (Math.random() * 0.5) - 0.3;
+                    currentWeight += change;
+                    
+                    healthPromises.push(App.create(App.STORES.SALUD, {
+                        type: 'weight',
+                        fecha: isoDate,
+                        val: parseFloat(currentWeight.toFixed(1)),
+                        grasa: parseFloat((25 - (i/365)*2).toFixed(1)),
+                        musculo: parseFloat((35 + (i/365)).toFixed(1)),
+                        agua: 55
+                    }));
+                }
+            }
+            await Promise.all(healthPromises);
+            log("Salud completada.");
+
+            // --- 2. FINANZAS ---
+            log("Generando Finanzas...");
+            const financePromises = [];
+            for (let i = 0; i < 365; i++) {
+                const d = new Date(oneYearAgo);
+                d.setDate(d.getDate() + i);
+                const isoDate = d.toISOString();
+
+                if (d.getDate() === 1) {
+                    financePromises.push(App.create(App.STORES.FINANZAS, {
+                        tipo: 'ingreso',
+                        monto: 1500,
+                        categoria: 'Nómina',
+                        fecha: isoDate
+                    }));
+                }
+
+                if (Math.random() > 0.3) {
+                    const monto = (Math.random() * 20 + 2).toFixed(2);
+                    const cats = ['Comida', 'Transporte', 'Ocio', 'Supermercado'];
+                    financePromises.push(App.create(App.STORES.FINANZAS, {
+                        tipo: 'gasto',
+                        monto: parseFloat(monto),
+                        categoria: cats[Math.floor(Math.random() * cats.length)],
+                        fecha: isoDate
+                    }));
+                }
+            }
+            await Promise.all(financePromises);
+            log("Finanzas completadas.");
+
+            // --- 3. AGENDA ---
+            log("Generando Eventos...");
+            const events = [
+                { t: "Examen Matemáticas", off: 2, type: 'exam' },
+                { t: "Entrega Proyecto", off: 5, type: 'work' },
+                { t: "Cena Clase", off: 10, type: 'leisure' },
+                { t: "Dentista", off: -20, type: 'health' }
+            ];
+            for (const ev of events) {
+                const d = new Date();
+                d.setDate(d.getDate() + ev.off);
+                d.setHours(10, 0, 0, 0);
+                await App.create(App.STORES.EVENTOS, {
+                    titulo: ev.t,
+                    fecha: d.toISOString(),
+                    hora: "10:00",
+                    tipo: ev.type,
+                    lugar: "Campus"
+                });
+            }
+            log("Agenda completada.");
+
+            // --- 4. HORARIO (8 CLASES POR DÍA) ---
+            log("Generando Horario (8 clases/día)...");
+            
+            const materiasList = [
+                "Matemáticas", "Lengua", "Inglés", "Historia", 
+                "Física", "Química", "Biología", "Filosofía", 
+                "Programación", "Educación Física"
+            ];
+            const aulas = ["A101", "B202", "Lab 1", "Gimnasio", "C303"];
+
+            // Definición de las 8 franjas horarias
+            const slots = [
+                { ini: "08:00", fin: "08:50" },
+                { ini: "08:55", fin: "09:45" },
+                { ini: "09:50", fin: "10:40" },
+                { ini: "11:10", fin: "12:00" }, // Descanso antes
+                { ini: "12:05", fin: "12:55" },
+                { ini: "13:00", fin: "13:50" },
+                { ini: "15:00", fin: "15:50" }, // Comida antes
+                { ini: "15:55", fin: "16:45" }
+            ];
+
+            // Generar Lunes (1) a Viernes (5)
+            for (let dia = 1; dia <= 5; dia++) {
+                // Barajar materias para que cada día sea diferente
+                const materiasDia = [...materiasList].sort(() => 0.5 - Math.random());
+                
+                for (let i = 0; i < 8; i++) {
+                    await App.create(App.STORES.HORARIO, {
+                        dia: dia,
+                        horaInicio: slots[i].ini,
+                        horaFin: slots[i].fin,
+                        materia: materiasDia[i],
+                        aula: aulas[Math.floor(Math.random() * aulas.length)]
+                    });
+                }
+            }
+            log("Horario completado (40 clases generadas).");
+
+
+            // --- 5. NOTAS ---
+            log("Generando Notas...");
+            const subjects = [
+                { name: "Cálculo", w: 85, grades: [8, 7.5, 9] },
+                { name: "Física", w: 40, grades: [3, 4] },
+                { name: "Programación", w: 100, grades: [10, 9.5, 10] },
+                { name: "Ética", w: 0, grades: [] }
+            ];
+
+            for (const sub of subjects) {
+                const sections = [];
+                if (sub.grades.length > 0) {
+                    const gradeObjs = sub.grades.map((g, idx) => ({
+                        id: Date.now() + idx,
+                        name: `Examen ${idx+1}`,
+                        val: g
+                    }));
+                    sections.push({
+                        id: Date.now() + 100,
+                        name: "Exámenes",
+                        weight: sub.w,
+                        grades: gradeObjs
+                    });
+                }
+                await App.create(App.STORES.NOTAS, {
+                    name: sub.name,
+                    sections: sections,
+                    createdAt: new Date().toISOString()
+                });
+            }
+            
+            // Notas de texto
+            await App.create(App.STORES.NOTAS, {
+                title: "Lista Compra",
+                content: "- Leche\n- Pan",
+                type: "todo",
+                createdAt: new Date().toISOString()
+            });
+
+            log("✅ PROCESO FINALIZADO");
+            alert("Datos generados correctamente.");
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Asignaturas - Dashboard Pro</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <script src="db.js"></script>
+
+    <style>
+        /* --- ESTILOS ESPECÍFICOS (Extensión del Dashboard) --- */
+
+        /* Resumen superior */
+        .summary-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .summary-card {
+            background: var(--card-glass);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 15px;
+            text-align: center;
+        }
+        .sum-num { font-size: 1.8rem; font-weight: 800; color: var(--text-primary); }
+        .sum-lbl { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+
+        /* Pestañas (Tabs) */
+        .tabs-container {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            border-radius: 16px;
+            padding: 4px;
+            margin-bottom: 20px;
+            border: 1px solid var(--card-border);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Tarjeta de Asignatura (Estilo Agenda) */
+        .subject-card {
+            background: var(--card-glass);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+        .subject-card:active { transform: scale(0.99); background: rgba(255,255,255,0.08); }
+
+        /* Barra lateral de estado */
+        .subject-card::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+        }
+        .subject-card.status-pass::before { background: var(--accent-green); }
+        .subject-card.status-fail::before { background: var(--accent-red); }
+        .subject-card.status-new::before { background: var(--accent-blue); }
+
+        /* Header de la tarjeta */
+        .sub-header { display: flex; justify-content: space-between; align-items: center; }
+        
+        .sub-title { font-size: 1.2rem; font-weight: 700; color: white; margin: 0; }
+        .sub-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+
+        .grade-badge {
+            font-size: 2rem; font-weight: 800; letter-spacing: -1px;
+            text-align: right;
+            line-height: 1;
+        }
+
+        /* Barra de progreso (Peso acumulado) */
+        .progress-track {
+            height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px;
+            margin-top: 12px; width: 100%; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; transition: width 0.5s ease;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        /* Detalles Expandibles */
+        .sub-details {
+            max-height: 0; overflow: hidden; opacity: 0;
+            transition: max-height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s;
+        }
+        .subject-card.expanded .sub-details {
+            max-height: 1000px; opacity: 1; margin-top: 20px;
+            padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        /* Secciones y Notas */
+        .section-row { margin-bottom: 20px; }
+        .sec-header {
+            display: flex; justify-content: space-between;
+            font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary);
+            font-weight: 700; margin-bottom: 10px; letter-spacing: 0.5px;
+        }
+        
+        .grade-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.03); padding: 10px 14px;
+            border-radius: 12px; margin-bottom: 6px;
+        }
+
+        /* Inputs Unificados */
+        .inp-field {
+            width: 100%; background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 12px; border-radius: 12px;
+            color: white; font-size: 0.9rem; outline: none; transition: border-color 0.3s;
+        }
+        .inp-field:focus { border-color: var(--accent-blue); }
+
+        .input-group { display: flex; gap: 8px; margin-top: 10px; }
+
+        /* Botones */
+        .btn-mini {
+            background: var(--accent-blue); color: white; border: none;
+            border-radius: 12px; padding: 0 16px; font-weight: 700; cursor: pointer;
+        }
+        .btn-icon-del {
+            width: 24px; height: 24px; border-radius: 50%;
+            background: rgba(239, 68, 68, 0.15); color: var(--accent-red);
+            border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .btn-del-sec {
+            width: 100%; padding: 8px; margin-top: 8px;
+            background: transparent; color: var(--accent-red); border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 10px; font-size: 0.8rem; cursor: pointer;
+        }
+
+        /* Vistas */
+        .view-section { display: none; animation: fadeIn 0.3s ease; }
+        .view-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); opacity: 0.6; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <header style="margin-bottom: 20px; display:flex; align-items:center;">
+            <a href="index.html" style="color:var(--text-primary); display:flex; align-items:center; justify-content:center; width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:50%; text-decoration:none; margin-right: 15px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </a>
+            <h1 style="font-size:1.8rem; font-weight:800; margin:0;">Asignaturas</h1>
+        </header>
+
+        <div class="summary-row">
+            <div class="summary-card">
+                <div class="sum-num" id="global-avg" style="color:var(--accent-blue)">--</div>
+                <div class="sum-lbl">Promedio Global</div>
+            </div>
+            <div class="summary-card">
+                <div class="sum-num" id="total-subjects" style="color:var(--text-primary)">0</div>
+                <div class="sum-lbl">Materias</div>
+            </div>
+        </div>
+
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('grades', this)">Mis Notas</button>
+            <button class="tab-btn" onclick="switchTab('manage', this)">Gestionar</button>
+        </div>
+
+        <div id="view-grades" class="view-section active">
+            <div id="subjects-list">
+                </div>
+        </div>
+
+        <div id="view-manage" class="view-section">
+            <div class="subject-card" style="border-left:none;">
+                <h3 style="margin-top:0; margin-bottom:15px; font-size:1.1rem; color:var(--text-secondary);">Nueva Asignatura</h3>
+                <div class="input-group">
+                    <input type="text" id="new-subject-name" class="inp-field" placeholder="Nombre (Ej: Física I)">
+                    <button class="btn-mini" onclick="createSubject()">Crear</button>
+                </div>
+            </div>
+            
+            <div class="inp-label" style="margin-left: 10px; margin-bottom: 15px; margin-top:25px; color:var(--text-muted); font-size:0.8rem; font-weight:700; text-transform:uppercase;">Borrar Materias</div>
+            <div id="manage-list"></div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await App.init();
+            if(App.refreshTheme) App.refreshTheme();
+            renderAll();
+        });
+
+        async function renderAll() {
+            const allData = await App.read(App.STORES.NOTAS);
+            // Filtro: asumimos que las asignaturas tienen la propiedad 'sections' array
+            const subjects = allData.filter(d => d.sections && Array.isArray(d.sections));
+
+            calculateGlobalStats(subjects);
+            renderGradesView(subjects);
+            renderManageView(subjects);
+        }
+
+        // --- CÁLCULOS GLOBALES ---
+        function calculateGlobalStats(subjects) {
+            document.getElementById('total-subjects').innerText = subjects.length;
+
+            if(subjects.length === 0) {
+                document.getElementById('global-avg').innerText = "--";
+                return;
+            }
+
+            let sumAverages = 0;
+            let countActive = 0;
+
+            subjects.forEach(sub => {
+                const { average } = calculateSubjectStats(sub);
+                // Solo contamos para el promedio si tiene notas metidas (> 0)
+                // Opcional: contar ceros. Aquí asumimos que promedio > 0 cuenta.
+                if (average > 0) {
+                    sumAverages += average;
+                    countActive++;
+                }
+            });
+
+            const global = countActive > 0 ? (sumAverages / countActive) : 0;
+            document.getElementById('global-avg').innerText = global.toFixed(1);
+            
+            // Colorear el promedio global
+            const globEl = document.getElementById('global-avg');
+            if(global >= 5) globEl.style.color = "var(--accent-green)";
+            else if(global > 0) globEl.style.color = "var(--accent-red)";
+            else globEl.style.color = "var(--text-muted)";
+        }
+
+        // --- RENDER VISTAS ---
+        function renderGradesView(subjects) {
+            const container = document.getElementById('subjects-list');
+            
+            if(subjects.length === 0) {
+                container.innerHTML = '<div class="empty-state">No hay asignaturas.<br>Ve a la pestaña "Gestionar" para añadir una.</div>';
+                return;
+            }
+
+            container.innerHTML = subjects.map(sub => {
+                const { average, currentWeight } = calculateSubjectStats(sub);
+                
+                // Determinar estado y colores
+                let statusClass = 'status-new';
+                let color = 'var(--accent-blue)';
+                
+                if (currentWeight > 0) {
+                    if (average >= 5) {
+                        statusClass = 'status-pass';
+                        color = 'var(--accent-green)';
+                    } else {
+                        statusClass = 'status-fail';
+                        color = 'var(--accent-red)';
+                    }
+                }
+
+                // Renderizado de Secciones
+                const sectionsHtml = sub.sections.map(sec => {
+                    const secAvg = calculateSectionAverage(sec);
+                    
+                    const gradesHtml = sec.grades.map(g => `
+                        <div class="grade-item">
+                            <span style="color:var(--text-secondary); font-size:0.9rem;">${g.name}</span>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="font-weight:700; color:${g.val < 5 ? 'var(--accent-red)' : 'white'}">${g.val}</span>
+                                <button class="btn-icon-del" onclick="deleteGrade(${sub.id}, ${sec.id}, ${g.id})">×</button>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    return `
+                        <div class="section-row">
+                            <div class="sec-header">
+                                <span>${sec.name} (${sec.weight}%)</span>
+                                <span style="color:${secAvg >= 5 ? 'var(--accent-green)' : 'var(--text-secondary)'}">
+                                    Promedio: ${secAvg > -1 ? secAvg.toFixed(2) : '-'}
+                                </span>
+                            </div>
+                            
+                            ${gradesHtml}
+
+                            <div class="input-group">
+                                <input id="gn-${sec.id}" class="inp-field" placeholder="Concepto (Ej: Test)" style="flex:2">
+                                <input id="gv-${sec.id}" type="number" class="inp-field" placeholder="Nota" style="flex:1">
+                                <button class="btn-mini" onclick="addGrade(${sub.id}, ${sec.id})">OK</button>
+                            </div>
+                            <button class="btn-del-sec" onclick="deleteSection(${sub.id}, ${sec.id})">Eliminar Sección</button>
+                        </div>
+                    `;
+                }).join('');
+
+                // Añadir Sección
+                const addSectionHtml = currentWeight < 100 ? `
+                    <div style="border-top: 1px dashed var(--card-border); padding-top: 15px; margin-top: 20px;">
+                        <div style="font-size:0.75rem; color:var(--accent-blue); margin-bottom:8px; font-weight:700;">
+                            + NUEVA PONDERACIÓN (Queda: ${100 - currentWeight}%)
+                        </div>
+                        <div class="input-group">
+                            <input id="sn-${sub.id}" class="inp-field" placeholder="Ej: Examen Final" style="flex:2">
+                            <input id="sw-${sub.id}" type="number" class="inp-field" placeholder="%" style="flex:1">
+                            <button class="btn-mini" onclick="addSection(${sub.id})">＋</button>
+                        </div>
+                    </div>
+                ` : `<div style="text-align:center; font-size:0.75rem; color:var(--accent-green); margin-top:15px; opacity:0.8;">Asignatura completada (100%)</div>`;
+
+                return `
+                    <div class="subject-card ${statusClass}" id="card-${sub.id}">
+                        <div class="sub-header" onclick="toggleDetails(${sub.id})">
+                            <div style="flex:1">
+                                <h2 class="sub-title">${sub.name}</h2>
+                                <div class="sub-meta">Peso actual: ${currentWeight}%</div>
+                                <div class="progress-track">
+                                    <div class="progress-fill" style="width:${currentWeight}%; background:${color}; opacity:${currentWeight===100?1:0.6}"></div>
+                                </div>
+                            </div>
+                            <div class="grade-badge" style="color:${color}; margin-left:20px;">
+                                ${average > 0 ? average.toFixed(1) : '--'}
+                            </div>
+                        </div>
+
+                        <div class="sub-details">
+                            ${sectionsHtml}
+                            ${addSectionHtml}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderManageView(subjects) {
+            const container = document.getElementById('manage-list');
+            if(subjects.length === 0) {
+                container.innerHTML = '<div style="color:var(--text-muted); text-align:center;">Nada que borrar.</div>';
+                return;
+            }
+            
+            container.innerHTML = subjects.map(s => `
+                <div class="subject-card" style="padding:15px; display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-left:none;">
+                    <span style="font-weight:600; color:white;">${s.name}</span>
+                    <button class="btn-icon-del" style="width:32px; height:32px; font-size:18px;" onclick="deleteSubject(${s.id})">×</button>
+                </div>
+            `).join('');
+        }
+
+        // --- LOGICA MATEMÁTICA ---
+        function calculateSubjectStats(subject) {
+            if (!subject.sections || subject.sections.length === 0) return { average: 0, currentWeight: 0 };
+            
+            let totalWeighted = 0;
+            let currentWeight = 0;
+
+            subject.sections.forEach(sec => {
+                currentWeight += sec.weight;
+                const secAvg = calculateSectionAverage(sec);
+                if (secAvg > -1) {
+                    totalWeighted += secAvg * (sec.weight / 100);
+                }
+            });
+
+            // Nota acumulada real (ej: tienes un 2 sobre 10 total, pero llevas el 20% del curso evaluado y tienes todo perfecto)
+            return { average: totalWeighted, currentWeight }; 
+        }
+
+        function calculateSectionAverage(section) {
+            if (!section.grades || section.grades.length === 0) return -1;
+            const sum = section.grades.reduce((a, b) => a + b.val, 0);
+            return sum / section.grades.length;
+        }
+
+        // --- INTERACCIONES ---
+        function switchTab(view, btn) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('view-' + view).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        function toggleDetails(id) {
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON') return;
+            const card = document.getElementById(`card-${id}`);
+            const wasOpen = card.classList.contains('expanded');
+            
+            document.querySelectorAll('.subject-card').forEach(c => c.classList.remove('expanded'));
+            
+            if(!wasOpen) card.classList.add('expanded');
+        }
+
+        // --- CRUD DB ---
+        async function createSubject() {
+            const name = document.getElementById('new-subject-name').value;
+            if(!name) return;
+
+            const newSub = { name, sections: [], createdAt: new Date() };
+            await App.create(App.STORES.NOTAS, newSub); // Usamos NOTAS como store genérico si no hay uno específico
+            
+            document.getElementById('new-subject-name').value = '';
+            App.toast("Asignatura creada");
+            renderAll();
+        }
+
+        async function deleteSubject(id) {
+            if(confirm("¿Eliminar asignatura y todas sus notas?")) {
+                await App.delete(App.STORES.NOTAS, id);
+                renderAll();
+            }
+        }
+
+        async function addSection(subId) {
+            const name = document.getElementById(`sn-${subId}`).value;
+            const weight = parseFloat(document.getElementById(`sw-${subId}`).value);
+
+            if(!name || isNaN(weight)) return App.toast("Datos inválidos", "error");
+
+            const data = await App.read(App.STORES.NOTAS);
+            const sub = data.find(s => s.id === subId);
+            
+            const currentW = sub.sections.reduce((a,s) => a + s.weight, 0);
+            if (currentW + weight > 100) return App.toast(`Solo queda ${100-currentW}% disponible`, "error");
+
+            sub.sections.push({ id: Date.now(), name, weight, grades: [] });
+            await App.update(App.STORES.NOTAS, sub);
+            renderAll();
+            setTimeout(() => document.getElementById(`card-${subId}`).classList.add('expanded'), 50);
+        }
+
+        async function deleteSection(subId, secId) {
+            if(!confirm("¿Borrar sección?")) return;
+            const data = await App.read(App.STORES.NOTAS);
+            const sub = data.find(s => s.id === subId);
+            sub.sections = sub.sections.filter(s => s.id !== secId);
+            await App.update(App.STORES.NOTAS, sub);
+            renderAll();
+            setTimeout(() => document.getElementById(`card-${subId}`).classList.add('expanded'), 50);
+        }
+
+        async function addGrade(subId, secId) {
+            const name = document.getElementById(`gn-${secId}`).value || 'Nota';
+            const val = parseFloat(document.getElementById(`gv-${secId}`).value);
+
+            if(isNaN(val)) return;
+
+            const data = await App.read(App.STORES.NOTAS);
+            const sub = data.find(s => s.id === subId);
+            const sec = sub.sections.find(s => s.id === secId);
+
+            sec.grades.push({ id: Date.now(), name, val });
+            await App.update(App.STORES.NOTAS, sub);
+            renderAll();
+            setTimeout(() => document.getElementById(`card-${subId}`).classList.add('expanded'), 50);
+        }
+
+        async function deleteGrade(subId, secId, gradeId) {
+            const data = await App.read(App.STORES.NOTAS);
+            const sub = data.find(s => s.id === subId);
+            const sec = sub.sections.find(s => s.id === secId);
+            sec.grades = sec.grades.filter(g => g.id !== gradeId);
+
+            await App.update(App.STORES.NOTAS, sub);
+            renderAll();
+            setTimeout(() => document.getElementById(`card-${subId}`).classList.add('expanded'), 50);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Finanzas - Dashboard Pro</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <script src="db.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Estilos específicos de Finanzas */
+        
+        /* Hero Section */
+        .hero-section {
+            text-align: center;
+            padding: 20px 0 30px 0;
+        }
+
+        .hero-amount {
+            font-family: var(--font-heading);
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(180deg, #fff 20%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 5px 0;
+            letter-spacing: -1px;
+        }
+
+        .hero-label {
+            color: var(--accent-green);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            background: rgba(48, 209, 88, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        /* Botones de Acción (Grid) */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .action-btn {
+            /* Estilo base */
+            padding: 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid transparent;
+        }
+
+        .action-btn:active { transform: scale(0.96); }
+
+        .btn-icon { font-size: 1.6rem; }
+        
+        .btn-info { display: flex; flex-direction: column; text-align: left; }
+        .btn-lbl { font-weight: 600; font-size: 0.95rem; color: #fff; }
+        .btn-sub { font-size: 0.75rem; color: rgba(255,255,255,0.7); }
+
+        /* Variantes de Color (usando tus clases) */
+        .b-blue { background: rgba(10, 132, 255, 0.15); border-color: rgba(10, 132, 255, 0.3); }
+        .b-purple { background: rgba(191, 90, 242, 0.15); border-color: rgba(191, 90, 242, 0.3); }
+        .b-green { background: rgba(48, 209, 88, 0.15); border-color: rgba(48, 209, 88, 0.3); }
+        .b-orange { background: rgba(255, 159, 10, 0.15); border-color: rgba(255, 159, 10, 0.3); }
+        .b-cyan { background: rgba(100, 210, 255, 0.15); border-color: rgba(100, 210, 255, 0.3); }
+        .b-gray { background: rgba(142, 142, 147, 0.15); border-color: rgba(142, 142, 147, 0.3); }
+
+        /* Lista Historial */
+        .trans-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 30px; }
+
+        .trans-item {
+            background: var(--card-bg);
+            backdrop-filter: blur(var(--blur-strength));
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .t-left { display: flex; align-items: center; gap: 14px; }
+        .t-icon-box {
+            width: 42px; height: 42px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+        }
+        .t-info { display: flex; flex-direction: column; }
+        .t-cat { font-weight: 600; font-size: 1rem; color: var(--text-primary); }
+        .t-date { font-size: 0.8rem; color: var(--text-secondary); }
+        .t-amount { font-weight: 700; font-size: 1.1rem; color: var(--text-primary); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+            display: flex; align-items: flex-end; justify-content: center;
+        }
+        .modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+        .modal-sheet {
+            background: #1c1c1e;
+            width: 100%; max-width: 460px;
+            border-radius: 28px 28px 0 0;
+            padding: 30px 24px 40px 24px;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        }
+        .modal-overlay.open .modal-sheet { transform: translateY(0); }
+
+        .input-display {
+            background: rgba(0,0,0,0.3); border-radius: 20px; padding: 25px;
+            display: flex; justify-content: center; align-items: center; margin: 20px 0;
+        }
+        .input-main {
+            background: none; border: none; color: white; font-size: 2.5rem;
+            font-weight: 700; width: 100%; text-align: center; outline: none;
+        }
+
+        .btn-modal { width: 100%; padding: 16px; border-radius: 16px; border: none; font-weight: 700; font-size: 1rem; margin-top: 10px; cursor: pointer; }
+        .btn-save { background: var(--accent-blue); color: white; }
+        .btn-del { background: rgba(255, 69, 58, 0.15); color: var(--accent-red); }
+
+        /* Sección Títulos */
+        .section-header {
+            margin: 30px 0 15px 5px; 
+            font-weight: 700; 
+            color: var(--text-secondary); 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <header style="margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <a href="index.html" style="color:var(--text-primary); text-decoration:none;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                </a>
+                <h1 style="font-size:1.5rem; margin:0;">Finanzas</h1>
+            </div>
+            <div style="width: 24px;"></div>
+        </header>
+
+        <div class="hero-section">
+            <div class="hero-label">Gasto este mes</div>
+            <div class="hero-amount" id="total-amount">0.00€</div>
+        </div>
+
+        <div class="card" style="padding: 20px; margin-bottom: 25px;">
+            <div style="height: 200px; position: relative;">
+                <canvas id="chartDonut"></canvas>
+            </div>
+        </div>
+
+        <div class="section-header">Añadir Nuevo</div>
+        <div class="actions-grid">
+            <div class="action-btn b-blue" onclick="addFixed('Transporte', '🚌', 1.10)">
+                <span class="btn-icon">🚌</span>
+                <div class="btn-info"><span class="btn-lbl">Transporte</span><span class="btn-sub">1.10 €</span></div>
+            </div>
+            
+            <div class="action-btn b-purple" onclick="addFixed('Alquiler', '🏠', 125)">
+                <span class="btn-icon">🏠</span>
+                <div class="btn-info"><span class="btn-lbl">Alquiler</span><span class="btn-sub">125 €</span></div>
+            </div>
+
+            <div class="action-btn b-orange" onclick="openModal('Comida', '🍔')">
+                <span class="btn-icon">🍔</span>
+                <div class="btn-info"><span class="btn-lbl">Comida</span><span class="btn-sub">Variable</span></div>
+            </div>
+
+            <div class="action-btn b-green" onclick="openModal('Súper', '🛒')">
+                <span class="btn-icon">🛒</span>
+                <div class="btn-info"><span class="btn-lbl">Súper</span><span class="btn-sub">Variable</span></div>
+            </div>
+
+            <div class="action-btn b-cyan" onclick="openModal('Ocio', '🎉')">
+                <span class="btn-icon">🎉</span>
+                <div class="btn-info"><span class="btn-lbl">Ocio</span><span class="btn-sub">Variable</span></div>
+            </div>
+
+            <div class="action-btn b-gray" onclick="openModal('Otros', '💸')">
+                <span class="btn-icon">💸</span>
+                <div class="btn-info"><span class="btn-lbl">Otros</span><span class="btn-sub">Variable</span></div>
+            </div>
+        </div>
+
+        <div class="section-header">Últimos Movimientos</div>
+        <div class="trans-list" id="tx-list">
+            </div>
+
+        <div class="section-header">Historial 6 Meses </div>
+        <div class="card" style="padding: 20px; margin-bottom: 40px;">
+            <div style="height: 180px; position: relative;">
+                <canvas id="chartHistory"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="modal">
+        <div class="modal-sheet">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <span style="font-weight:700; font-size:1.2rem;" id="modal-title">Nuevo Gasto</span>
+                <span style="color:var(--accent-blue); cursor:pointer;" onclick="closeModal()">Cancelar</span>
+            </div>
+            
+            <div class="input-display">
+                <span style="font-size:2rem; color:#666; margin-right:5px;">€</span>
+                <input type="number" id="inp-amount" class="input-main" placeholder="0.00" step="0.01">
+            </div>
+
+            <button class="btn-modal btn-save" onclick="saveTransaction()">Guardar</button>
+            <button class="btn-modal btn-del" id="btn-delete" style="display:none;" onclick="deleteTransaction()">Eliminar</button>
+        </div>
+    </div>
+
+    <script>
+        let donutChart = null;
+        let historyChart = null;
+        let currentEditId = null;
+        let currentCategory = null; // { label, icon }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', async () => {
+            await App.init();
+            if(App.refreshTheme) App.refreshTheme();
+            loadData();
+        });
+
+        async function loadData() {
+            const allTx = await App.read(App.STORES.FINANZAS);
+            
+            const now = new Date();
+            const cm = now.getMonth();
+            const cy = now.getFullYear();
+
+            // Filtrar mes actual para cabecera y donut
+            const monthTx = allTx.filter(t => {
+                const d = new Date(t.fecha);
+                return d.getMonth() === cm && d.getFullYear() === cy && t.tipo === 'gasto';
+            });
+
+            // 1. Total Mes
+            const total = monthTx.reduce((sum, t) => sum + parseFloat(t.monto), 0);
+            document.getElementById('total-amount').innerText = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total);
+
+            // 2. Gráficas
+            renderDonutChart(monthTx);
+            renderHistoryChart(allTx); // Pasamos todas para calcular historial
+
+            // 3. Lista (Últimos 10)
+            renderList(allTx); 
+        }
+
+        function renderList(list) {
+            const container = document.getElementById('tx-list');
+            container.innerHTML = '';
+            
+            // Ordenar por fecha descendente
+            const sorted = list.sort((a,b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 10);
+
+            if (sorted.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">Sin gastos recientes</div>';
+                return;
+            }
+
+            sorted.forEach(item => {
+                const date = new Date(item.fecha).toLocaleDateString('es-ES', {day:'numeric', month:'short'});
+                const div = document.createElement('div');
+                div.className = 'trans-item';
+                div.onclick = () => openEditModal(item);
+                div.innerHTML = `
+                    <div class="t-left">
+                        <div class="t-icon-box">${item.icon || '💸'}</div>
+                        <div class="t-info">
+                            <span class="t-cat">${item.categoria}</span>
+                            <span class="t-date">${date}</span>
+                        </div>
+                    </div>
+                    <div class="t-amount">-${parseFloat(item.monto).toFixed(2)}€</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- ACCIONES ---
+
+        async function addFixed(label, icon, amount) {
+            const data = {
+                tipo: 'gasto',
+                categoria: label,
+                icon: icon,
+                monto: amount,
+                fecha: new Date().toISOString()
+            };
+            await App.create(App.STORES.FINANZAS, data);
+            App.toast(`Añadido: ${label} (${amount}€)`);
+            loadData();
+        }
+
+        function openModal(label, icon) {
+            currentCategory = { label, icon };
+            currentEditId = null;
+            document.getElementById('modal-title').innerText = label;
+            document.getElementById('inp-amount').value = '';
+            document.getElementById('btn-delete').style.display = 'none';
+            document.getElementById('modal').classList.add('open');
+            setTimeout(() => document.getElementById('inp-amount').focus(), 100);
+        }
+
+        function openEditModal(item) {
+            currentEditId = item.id;
+            currentCategory = { label: item.categoria, icon: item.icon };
+            document.getElementById('modal-title').innerText = "Editar Gasto";
+            document.getElementById('inp-amount').value = item.monto;
+            document.getElementById('btn-delete').style.display = 'block';
+            document.getElementById('modal').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('open');
+            document.getElementById('inp-amount').blur();
+        }
+
+        async function saveTransaction() {
+            const val = parseFloat(document.getElementById('inp-amount').value);
+            if (!val || val <= 0) return App.toast('Monto inválido', 'error');
+
+            if (currentEditId) {
+                const item = await App.readOne(App.STORES.FINANZAS, currentEditId);
+                if(item) {
+                    item.monto = val;
+                    await App.update(App.STORES.FINANZAS, item);
+                    App.toast('Actualizado');
+                }
+            } else {
+                const newItem = {
+                    tipo: 'gasto',
+                    categoria: currentCategory.label,
+                    icon: currentCategory.icon,
+                    monto: val,
+                    fecha: new Date().toISOString()
+                };
+                await App.create(App.STORES.FINANZAS, newItem);
+                App.toast('Guardado');
+            }
+            closeModal();
+            loadData();
+        }
+
+        async function deleteTransaction() {
+            if(confirm('¿Borrar este gasto?')) {
+                await App.delete(App.STORES.FINANZAS, currentEditId);
+                closeModal();
+                loadData();
+            }
+        }
+
+        // --- GRÁFICAS ---
+
+        function renderDonutChart(data) {
+            const ctx = document.getElementById('chartDonut').getContext('2d');
+            const groups = {};
+            data.forEach(t => groups[t.categoria] = (groups[t.categoria] || 0) + parseFloat(t.monto));
+
+            const labels = Object.keys(groups);
+            const values = Object.values(groups);
+            const colors = ['#0a84ff', '#30d158', '#ff9f0a', '#ff453a', '#bf5af2', '#64d2ff'];
+
+            if(donutChart) donutChart.destroy();
+            
+            // Si vacío
+            if(values.length === 0) {
+                 donutChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: { labels:['Sin datos'], datasets:[{data:[1], backgroundColor:['#333'], borderWidth:0}] },
+                    options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '70%' }
+                });
+                return;
+            }
+
+            donutChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        hoverOffset: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#8e8e93', boxWidth: 10, font: {size: 11} } }
+                    }
+                }
+            });
+        }
+
+        function renderHistoryChart(allTx) {
+            const ctx = document.getElementById('chartHistory').getContext('2d');
+            
+            // Agrupar últimos 6 meses
+            const history = {}; // "2023-10": 150
+            const now = new Date();
+            
+            // Inicializar últimos 6 meses en 0
+            for(let i=5; i>=0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`;
+                history[key] = { label: d.toLocaleString('es', {month:'short'}), value: 0 };
+            }
+
+            // Sumar datos
+            allTx.forEach(t => {
+                if(t.tipo === 'gasto') {
+                    const d = new Date(t.fecha);
+                    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}`;
+                    if(history[key]) history[key].value += parseFloat(t.monto);
+                }
+            });
+
+            const labels = Object.values(history).map(h => h.label);
+            const data = Object.values(history).map(h => h.value);
+
+            if(historyChart) historyChart.destroy();
+
+            historyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Gasto (€)',
+                        data: data,
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        borderRadius: 4,
+                        hoverBackgroundColor: '#0a84ff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { 
+                            grid: { display: false },
+                            ticks: { color: '#8e8e93', font: {size: 10} }
+                        },
+                        y: { 
+                            display: false,
+                            grid: { display: false } 
+                        }
+                    }
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>

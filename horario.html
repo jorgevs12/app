@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Horario - Dashboard Pro</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <script src="db.js"></script>
+
+    <style>
+        /* Estilos específicos de Horario */
+
+        /* Switch Tipo (Teoría / Lab) */
+        .type-switch {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 14px;
+            padding: 4px;
+            display: flex;
+            position: relative;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .switch-bg {
+            position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px);
+            background: var(--accent-blue);
+            border-radius: 10px;
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1;
+        }
+
+        .switch-option {
+            flex: 1; text-align: center; padding: 10px 0; font-size: 0.9rem; font-weight: 600;
+            color: var(--text-muted); cursor: pointer; z-index: 2; transition: color 0.3s;
+        }
+        .switch-option.active { color: white; }
+
+        /* Formulario */
+        .form-card {
+            background: var(--card-glass);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 20px;
+            backdrop-filter: blur(var(--blur-strength));
+            margin-bottom: 30px;
+        }
+
+        .inp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        
+        .inp-field {
+            width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            padding: 14px; border-radius: 14px; color: white; font-size: 1rem; outline: none;
+            font-family: inherit; transition: border-color 0.2s;
+        }
+        .inp-field:focus { border-color: var(--accent-blue); }
+
+        .btn-add {
+            width: 100%; padding: 16px; background: var(--accent-blue); color: white;
+            border: none; border-radius: 16px; font-weight: 700; font-size: 1rem;
+            margin-top: 10px; cursor: pointer;
+        }
+
+        /* Lista del Horario */
+        .day-group { margin-bottom: 25px; animation: slideUp 0.4s ease forwards; }
+        
+        .day-header {
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-secondary); margin-bottom: 10px; margin-left: 5px; font-weight: 700;
+        }
+
+        .class-item {
+            background: var(--card-glass);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 16px;
+            margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: relative; overflow: hidden;
+        }
+
+        /* Indicador lateral de color */
+        .class-item::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+            background: var(--accent-blue);
+        }
+        .class-item.is-lab::before { background: var(--accent-purple); }
+
+        .c-time {
+            display: flex; flex-direction: column; width: 60px;
+            font-family: monospace; font-size: 0.95rem; font-weight: 700; opacity: 0.9;
+        }
+        .c-time-end { font-size: 0.75rem; color: var(--text-muted); font-weight: 400; }
+
+        .c-info { flex: 1; padding-left: 10px; }
+        .c-title { font-weight: 600; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
+        .c-room { font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+
+        .lab-badge {
+            font-size: 0.65rem; background: rgba(191, 90, 242, 0.2); color: #dfaaff;
+            padding: 2px 6px; border-radius: 6px; border: 1px solid rgba(191, 90, 242, 0.3);
+        }
+
+        .btn-del {
+            background: transparent; border: none; color: var(--text-muted); padding: 8px;
+            cursor: pointer; opacity: 0.5; transition: opacity 0.2s;
+        }
+        .btn-del:hover { opacity: 1; color: var(--accent-red); }
+
+        @keyframes slideUp { from {opacity:0; transform:translateY(10px);} to {opacity:1; transform:translateY(0);} }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header style="margin-bottom: 25px; display:flex; align-items:center;">
+            <a href="index.html" style="color:var(--text-primary); display:flex; align-items:center; justify-content:center; width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:50%; text-decoration:none; margin-right: 15px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </a>
+            <div>
+                <h1 style="font-size:1.8rem; font-weight:800; margin:0;">Horario</h1>
+                <div style="font-size:0.9rem; color:var(--text-muted);">Organizador Semanal</div>
+            </div>
+        </header>
+
+        <div class="form-card">
+            
+            <div class="type-switch">
+                <div class="switch-bg" id="switch-bg"></div>
+                <div class="switch-option active" onclick="setType('clase')">Teoría</div>
+                <div class="switch-option" onclick="setType('lab')">Laboratorio</div>
+            </div>
+
+            <div class="inp-row">
+                <select id="h-day" class="inp-field">
+                    <option value="1">Lunes</option>
+                    <option value="2">Martes</option>
+                    <option value="3">Miércoles</option>
+                    <option value="4">Jueves</option>
+                    <option value="5">Viernes</option>
+                </select>
+            </div>
+
+            <div class="inp-row">
+                <input type="time" id="h-start" class="inp-field" required>
+                <input type="time" id="h-end" class="inp-field" required>
+            </div>
+
+            <input type="text" id="h-subject" class="inp-field" placeholder="Nombre Asignatura" style="margin-bottom: 12px;">
+            <input type="text" id="h-room" class="inp-field" placeholder="Aula (Ej. A-201)">
+
+            <button class="btn-add" onclick="addClass()">Añadir Clase</button>
+        </div>
+
+        <div id="schedule-list" style="padding-bottom: 60px;">
+            </div>
+
+    </div>
+
+    <script>
+        let currentType = 'clase'; // 'clase' (azul) o 'lab' (morado)
+        const dayNames = { 1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo' };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await App.init();
+            if(App.refreshTheme) App.refreshTheme();
+            loadSchedule();
+        });
+
+        // Toggle Switch Lógica
+        function setType(type) {
+            currentType = type;
+            const bg = document.getElementById('switch-bg');
+            const opts = document.querySelectorAll('.switch-option');
+            
+            if (type === 'lab') {
+                bg.style.transform = 'translateX(100%)';
+                bg.style.backgroundColor = 'var(--accent-purple)'; // Morado
+                opts[0].classList.remove('active');
+                opts[1].classList.add('active');
+            } else {
+                bg.style.transform = 'translateX(0)';
+                bg.style.backgroundColor = 'var(--accent-blue)'; // Azul
+                opts[1].classList.remove('active');
+                opts[0].classList.add('active');
+            }
+        }
+
+        // Cargar y Renderizar
+        async function loadSchedule() {
+            const container = document.getElementById('schedule-list');
+            container.innerHTML = '';
+
+            try {
+                const schedule = await App.read(App.STORES.HORARIO);
+                
+                if (schedule.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:40px; opacity:0.5;">No hay clases configuradas.<br>Añade una arriba.</div>';
+                    return;
+                }
+
+                // Ordenar: Día (1-5) -> Hora Inicio
+                schedule.sort((a, b) => {
+                    if (parseInt(a.dia) !== parseInt(b.dia)) return parseInt(a.dia) - parseInt(b.dia);
+                    return a.horaInicio.localeCompare(b.horaInicio);
+                });
+
+                // Agrupar por días
+                let currentDay = null;
+                let dayContainer = null;
+
+                schedule.forEach(item => {
+                    // Nuevo día detectado
+                    if (item.dia != currentDay) {
+                        currentDay = item.dia;
+                        
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'day-group';
+                        wrapper.innerHTML = `<div class="day-header">${dayNames[currentDay] || 'Día ' + currentDay}</div>`;
+                        
+                        // Contenedor interno para las tarjetas
+                        dayContainer = document.createElement('div');
+                        wrapper.appendChild(dayContainer);
+                        container.appendChild(wrapper);
+                    }
+
+                    // Render Item
+                    const isLab = item.tipo === 'lab';
+                    const div = document.createElement('div');
+                    div.className = `class-item ${isLab ? 'is-lab' : ''}`;
+                    
+                    div.innerHTML = `
+                        <div class="c-time">
+                            <span>${item.horaInicio}</span>
+                            <span class="c-time-end">${item.horaFin}</span>
+                        </div>
+                        <div class="c-info">
+                            <div class="c-title">
+                                ${item.materia}
+                                ${isLab ? '<span class="lab-badge">LAB</span>' : ''}
+                            </div>
+                            <div class="c-room">
+                                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                ${item.aula || 'Sin aula'}
+                            </div>
+                        </div>
+                        <button class="btn-del" onclick="deleteClass(${item.id})">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                        </button>
+                    `;
+                    dayContainer.appendChild(div);
+                });
+
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Añadir Clase
+        async function addClass() {
+            const day = document.getElementById('h-day').value;
+            const start = document.getElementById('h-start').value;
+            const end = document.getElementById('h-end').value;
+            const subj = document.getElementById('h-subject').value;
+            const room = document.getElementById('h-room').value;
+
+            if(!start || !end || !subj) return App.toast("Faltan datos", "error");
+
+            const newItem = {
+                dia: parseInt(day),
+                horaInicio: start,
+                horaFin: end,
+                materia: subj,
+                aula: room,
+                tipo: currentType // 'clase' o 'lab'
+            };
+
+            await App.create(App.STORES.HORARIO, newItem);
+            
+            // Limpiar campos de texto (dejamos día y hora para meter varias seguidas)
+            document.getElementById('h-subject').value = '';
+            document.getElementById('h-room').value = '';
+            
+            App.toast("Clase añadida");
+            loadSchedule();
+        }
+
+        // Borrar Clase
+        async function deleteClass(id) {
+            if(confirm("¿Eliminar clase?")) {
+                await App.delete(App.STORES.HORARIO, id);
+                loadSchedule();
+            }
+        }
+
+    </script>
+</body>
+</html>

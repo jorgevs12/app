@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Agenda - Dashboard Pro</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <script src="db.js"></script>
+
+    <style>
+        /* Estilos específicos de Agenda */
+
+        /* Resumen superior */
+        .summary-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .summary-card {
+            background: var(--card-glass);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 15px;
+            text-align: center;
+        }
+        .sum-num { font-size: 1.8rem; font-weight: 800; color: var(--text-primary); }
+        .sum-lbl { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+
+        /* Formulario */
+        .form-card {
+            background: var(--card-glass);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(var(--blur-strength));
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .form-full { grid-column: span 2; }
+
+        .inp-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 6px;
+            display: block;
+            margin-left: 4px;
+        }
+
+        .inp-field {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 14px;
+            border-radius: 16px;
+            color: white;
+            font-size: 1rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .inp-field:focus { border-color: var(--accent-blue); }
+
+        .btn-action {
+            grid-column: span 2;
+            padding: 16px;
+            border-radius: 16px;
+            border: none;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.1s;
+        }
+        .btn-action:active { transform: scale(0.98); }
+        
+        .btn-save { background: var(--accent-blue); color: white; }
+        .btn-cancel { background: transparent; color: var(--accent-red); border: 1px solid rgba(255, 69, 58, 0.3); display: none; }
+
+        /* Lista de Eventos */
+        .event-list { display: flex; flex-direction: column; gap: 15px; padding-bottom: 80px; }
+
+        .event-card {
+            background: var(--card-glass);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+        .event-card:active { transform: scale(0.98); background: rgba(255,255,255,0.08); }
+
+        /* Barra lateral de color */
+        .event-card::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+        }
+        /* Colores según tipo */
+        .event-card.type-exam::before { background: var(--accent-orange); } /* Examen */
+        .event-card.type-work::before { background: var(--accent-purple); } /* Trabajo */
+
+        .ev-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        
+        .ev-badge { 
+            font-size: 0.7rem; text-transform: uppercase; font-weight: 700; 
+            padding: 4px 10px; border-radius: 10px; 
+            background: rgba(255,255,255,0.1); color: var(--text-secondary);
+        }
+        
+        /* Personalización de badges */
+        .type-exam .ev-badge { background: rgba(255, 159, 10, 0.15); color: var(--accent-orange); }
+        .type-work .ev-badge { background: rgba(191, 90, 242, 0.15); color: var(--accent-purple); }
+
+        .ev-countdown { font-size: 0.8rem; font-weight: 600; color: var(--accent-cyan); }
+        .ev-countdown.urgent { color: var(--accent-red); animation: pulse 2s infinite; }
+
+        .ev-title { font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 6px; }
+        
+        .ev-meta { display: flex; gap: 15px; font-size: 0.9rem; color: var(--text-muted); align-items: center; }
+
+        .ev-actions {
+            margin-top: 15px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+        .act-btn { font-size: 0.85rem; font-weight: 600; cursor: pointer; background: none; border: none; padding: 5px; }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); opacity: 0.6; }
+        
+        @keyframes pulse { 0% {opacity:1;} 50% {opacity:0.6;} 100% {opacity:1;} }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <header style="margin-bottom: 20px; display:flex; align-items:center;">
+            <a href="index.html" style="color:var(--text-primary); display:flex; align-items:center; justify-content:center; width:40px; height:40px; background:rgba(255,255,255,0.1); border-radius:50%; text-decoration:none; margin-right: 15px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </a>
+            <h1 style="font-size:1.8rem; font-weight:800; margin:0;">Agenda</h1>
+        </header>
+
+        <div class="summary-row">
+            <div class="summary-card">
+                <div class="sum-num" style="color:var(--accent-orange)" id="count-exams">0</div>
+                <div class="sum-lbl">Exámenes</div>
+            </div>
+            <div class="summary-card">
+                <div class="sum-num" style="color:var(--accent-purple)" id="count-works">0</div>
+                <div class="sum-lbl">Trabajos</div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="form-grid">
+                <div class="form-full">
+                    <label class="inp-label">Título</label>
+                    <input type="text" id="ev-title" class="inp-field" placeholder="Ej: Matemáticas">
+                </div>
+                
+                <div>
+                    <label class="inp-label">Fecha</label>
+                    <input type="date" id="ev-date" class="inp-field">
+                </div>
+
+                <div>
+                    <label class="inp-label">Hora</label>
+                    <input type="time" id="ev-time" class="inp-field">
+                </div>
+
+                <div class="form-full">
+                    <label class="inp-label">Tipo de Evento</label>
+                    <select id="ev-type" class="inp-field">
+                        <option value="exam">📝 Examen</option>
+                        <option value="work">💻 Trabajo / Entrega</option>
+                    </select>
+                </div>
+
+                <div class="form-full">
+                    <label class="inp-label">Detalles / Aula</label>
+                    <input type="text" id="ev-loc" class="inp-field" placeholder="Opcional">
+                </div>
+
+                <button id="btn-save" class="btn-action btn-save" onclick="saveEvent()">Guardar</button>
+                <button id="btn-cancel" class="btn-action btn-cancel" onclick="resetForm()">Cancelar Edición</button>
+            </div>
+        </div>
+
+        <div class="inp-label" style="margin-left: 10px; margin-bottom: 15px;">Próximos Eventos</div>
+        <div id="event-list" class="event-list">
+            </div>
+
+    </div>
+
+    <script>
+        let editingId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await App.init();
+            if(App.refreshTheme) App.refreshTheme();
+            loadEvents();
+        });
+
+        async function loadEvents() {
+            const list = document.getElementById('event-list');
+            try {
+                const events = await App.read(App.STORES.EVENTOS);
+                
+                // Contadores para el resumen
+                let examCount = 0;
+                let workCount = 0;
+                const now = new Date();
+
+                // Filtrar y contar (solo futuros o de hoy)
+                const futureEvents = events.filter(e => {
+                    const d = new Date(e.fecha);
+                    // Incluir eventos de hoy
+                    return d >= now || d.toDateString() === now.toDateString();
+                });
+
+                futureEvents.forEach(e => {
+                    if(e.tipo === 'exam') examCount++;
+                    if(e.tipo === 'work') workCount++;
+                });
+
+                document.getElementById('count-exams').innerText = examCount;
+                document.getElementById('count-works').innerText = workCount;
+
+                if (futureEvents.length === 0) {
+                    list.innerHTML = '<div class="empty-state">Todo despejado 🎉<br>No tienes exámenes ni trabajos.</div>';
+                    return;
+                }
+
+                // Ordenar por fecha
+                futureEvents.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+                list.innerHTML = '';
+                
+                futureEvents.forEach(ev => {
+                    const dateObj = new Date(ev.fecha);
+                    
+                    // Cuenta atrás
+                    const diffDays = Math.ceil((dateObj - now) / (1000 * 60 * 60 * 24));
+                    let timeText = diffDays <= 0 ? "¡HOY!" : diffDays === 1 ? "Mañana" : `En ${diffDays} días`;
+                    let isUrgent = diffDays <= 3;
+
+                    // Formatos
+                    const dateStr = dateObj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+                    const timeStr = dateObj.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                    
+                    // Etiquetas solo para Examen y Trabajo
+                    const typeLabel = ev.tipo === 'exam' ? 'Examen' : 'Trabajo';
+
+                    const div = document.createElement('div');
+                    div.className = `event-card type-${ev.tipo}`;
+                    div.innerHTML = `
+                        <div class="ev-header">
+                            <span class="ev-badge">${typeLabel}</span>
+                            <span class="ev-countdown ${isUrgent ? 'urgent' : ''}">${timeText}</span>
+                        </div>
+                        <div class="ev-title">${ev.titulo}</div>
+                        <div class="ev-meta">
+                            <span>📅 ${dateStr} • ${timeStr}</span>
+                            ${ev.lugar ? `<span>📍 ${ev.lugar}</span>` : ''}
+                        </div>
+                        <div class="ev-actions">
+                            <button class="act-btn" style="color:var(--accent-blue)" onclick="editEvent(${ev.id})">Editar</button>
+                            <button class="act-btn" style="color:var(--accent-red)" onclick="deleteEvent(${ev.id})">Borrar</button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function saveEvent() {
+            const title = document.getElementById('ev-title').value;
+            const date = document.getElementById('ev-date').value;
+            const time = document.getElementById('ev-time').value;
+            const type = document.getElementById('ev-type').value;
+            const loc = document.getElementById('ev-loc').value;
+
+            if(!title || !date || !time) return App.toast("Faltan datos", "error");
+
+            const fullDate = new Date(`${date}T${time}`).toISOString();
+
+            const data = {
+                titulo: title,
+                fecha: fullDate,
+                tipo: type, // Será 'exam' o 'work'
+                lugar: loc
+            };
+
+            if (editingId) {
+                data.id = editingId;
+                await App.update(App.STORES.EVENTOS, data);
+                App.toast('Actualizado');
+            } else {
+                await App.create(App.STORES.EVENTOS, data);
+                App.toast('Guardado');
+            }
+
+            resetForm();
+            loadEvents();
+        }
+
+        async function editEvent(id) {
+            const ev = await App.readOne(App.STORES.EVENTOS, id);
+            if(!ev) return;
+
+            editingId = id;
+            document.getElementById('ev-title').value = ev.titulo;
+            document.getElementById('ev-type').value = ev.tipo;
+            document.getElementById('ev-loc').value = ev.lugar || '';
+            
+            // Parsear fecha para inputs
+            const d = new Date(ev.fecha);
+            const local = new Date(d.getTime() - (d.getTimezoneOffset() * 60000));
+            const [datePart, timePart] = local.toISOString().split('T');
+            
+            document.getElementById('ev-date').value = datePart;
+            document.getElementById('ev-time').value = timePart.substring(0,5);
+
+            document.getElementById('btn-save').textContent = "Actualizar";
+            document.getElementById('btn-cancel').style.display = "block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function deleteEvent(id) {
+            if(confirm("¿Borrar?")) {
+                await App.delete(App.STORES.EVENTOS, id);
+                loadEvents();
+            }
+        }
+
+        function resetForm() {
+            editingId = null;
+            document.getElementById('ev-title').value = '';
+            document.getElementById('ev-date').value = '';
+            document.getElementById('ev-time').value = '';
+            document.getElementById('ev-loc').value = '';
+            document.getElementById('btn-save').textContent = "Guardar";
+            document.getElementById('btn-cancel').style.display = "none";
+        }
+    </script>
+</body>
+</html>
