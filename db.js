@@ -1,21 +1,21 @@
-/**
- * 💎 AGENDA CORE SYSTEM (AppDB)
- * Sistema centralizado: Base de Datos + TEMA VISUAL
- */
+
 
 const App = (function() {
     
     // --- 1. CONFIGURACIÓN ---
     const CONFIG = {
         DB_NAME: 'AgendaDB', 
-        VERSION: 21,
+        VERSION: 23, // Versión incrementada
         STORES: {
             SALUD: 'health',
             EVENTOS: 'events',
             FINANZAS: 'finance',
             HORARIO: 'schedule',
             NOTAS: 'notes',
-            CONFIG: 'settings'
+            CONFIG: 'settings',
+            PROYECTOS: 'projects',
+            TAREAS: 'tasks',     // Tareas sueltas
+            INBOX: 'inbox'       // Añadido por si usas el inbox.html
         }
     };
 
@@ -33,9 +33,12 @@ const App = (function() {
 
             request.onsuccess = (e) => {
                 dbInstance = e.target.result;
+                
+                // Tareas de inicialización
+                applyThemeGlobal(); // 1. Tema
+                runDailyCleanup();  // 2. Limpieza automática selectiva
+
                 resolve(dbInstance);
-                // Una vez conectada la DB, aplicamos el tema visual guardado
-                applyThemeGlobal(); 
             };
 
             request.onupgradeneeded = (e) => {
@@ -45,8 +48,7 @@ const App = (function() {
                         const opts = name === CONFIG.STORES.CONFIG ? { keyPath: 'key' } : { keyPath: 'id', autoIncrement: true };
                         const store = db.createObjectStore(name, opts);
                         if(name !== CONFIG.STORES.CONFIG) {
-                            store.createIndex('fecha', 'fecha', { unique: false });
-                            store.createIndex('tipo', 'tipo', { unique: false });
+                            if (!store.indexNames.contains('fecha')) store.createIndex('fecha', 'fecha', { unique: false });
                         }
                     }
                 });
@@ -76,6 +78,7 @@ const App = (function() {
     const CRUD = {
         create: async (storeName, data) => {
             if (!data.fecha && storeName !== CONFIG.STORES.CONFIG) data.fecha = new Date().toISOString();
+            if (!data.createdAt && storeName !== CONFIG.STORES.CONFIG) data.createdAt = new Date().toISOString();
             return await tx(storeName, 'readwrite', store => store.add(data));
         },
         read: async (storeName) => await tx(storeName, 'readonly', store => store.getAll()),
@@ -83,10 +86,8 @@ const App = (function() {
         update: async (storeName, data) => await tx(storeName, 'readwrite', store => store.put(data)),
         delete: async (storeName, id) => await tx(storeName, 'readwrite', store => store.delete(id)),
 
-        // Métodos de Configuración
         setConfig: async (key, value) => {
             await tx(CONFIG.STORES.CONFIG, 'readwrite', store => store.put({ key, value }));
-            // Si cambiamos un ajuste, aplicamos el tema inmediatamente
             if(key === 'accentColor' || key === 'enableBlur') applyThemeGlobal();
         },
         getConfig: async (key) => {
@@ -103,7 +104,7 @@ const App = (function() {
         }
     };
 
-    // --- 4. UTILIDADES (TOAST) ---
+    // --- 4. UTILIDADES ---
     function showToast(message, type = 'success') {
         const existing = document.getElementById('app-toast');
         if (existing) existing.remove();
@@ -116,40 +117,67 @@ const App = (function() {
         setTimeout(() => toast.remove(), 3000);
     }
 
-    // --- 5. SISTEMA DE TEMA AUTOMÁTICO (NUEVO) ---
-    
-// --- 5. SISTEMA DE TEMA AUTOMÁTICO (CORREGIDO PARA TU NUEVO CSS) ---
-    
+    // --- 5. SISTEMA DE TEMA AUTOMÁTICO ---
     async function applyThemeGlobal() {
         try {
             const config = await CRUD.getAllConfig();
             const root = document.documentElement;
 
-            // 1. Aplicar Color de Acento
-            if (config.accentColor) {
-                // Tu CSS usa --accent-blue como color principal en los textos y bordes
-                root.style.setProperty('--accent-blue', config.accentColor);
-            }
-
-            // 2. Aplicar Efecto Blur (Cristal)
+            if (config.accentColor) root.style.setProperty('--accent-blue', config.accentColor);
+            
             if (config.enableBlur === false) { 
-                // MODO RENDIMIENTO (Sin transparencia)
-                // Sobrescribimos el gradiente por un color sólido oscuro
                 root.style.setProperty('--card-bg', '#1c1c1e'); 
                 root.style.setProperty('--blur-strength', '0px');
             } else {
-                // MODO CRISTAL (Por defecto)
-                // Restauramos el gradiente original de tu CSS o uno similar con transparencia
                 root.style.setProperty('--card-bg', 'linear-gradient(180deg, rgba(32, 32, 35, 0.65) 0%, rgba(22, 22, 24, 0.75) 100%)');
                 root.style.setProperty('--blur-strength', '40px');
             }
+        } catch (e) { console.log("Init Theme..."); }
+    }
+
+    // --- 6. LIMPIEZA AUTOMÁTICA (00:00) ---
+    async function runDailyCleanup() {
+        try {
+            const todayStr = new Date().toDateString();
+            const lastCleanup = await CRUD.getConfig('lastCleanupDate');
+
+            if (lastCleanup === todayStr) return; // Ya se limpió hoy
+
+            console.log("🧹 Ejecutando limpieza diaria de tareas sueltas...");
+            let cleanedCount = 0;
+
+            // 1. Limpiar Store 'TAREAS' (Tareas sueltas)
+            const tasks = await CRUD.read(CONFIG.STORES.TAREAS);
+            for (const t of tasks) {
+                if (t.done === true) { 
+                    await CRUD.delete(CONFIG.STORES.TAREAS, t.id);
+                    cleanedCount++;
+                }
+            }
+
+            // 2. Limpiar Store 'INBOX' (Si usaste el inbox.html)
+            const inboxItems = await CRUD.read(CONFIG.STORES.INBOX);
+            for (const item of inboxItems) {
+                if (item.processed === true) {
+                    await CRUD.delete(CONFIG.STORES.INBOX, item.id);
+                    cleanedCount++;
+                }
+            }
+
+            // NOTA: NO tocamos el store 'PROYECTOS'. Las tareas dentro de proyectos se quedan.
+
+            await CRUD.setConfig('lastCleanupDate', todayStr);
+
+            if (cleanedCount > 0) {
+                showToast(`Limpieza: ${cleanedCount} tareas sueltas borradas`, 'success');
+            }
 
         } catch (e) {
-            console.log("Esperando configuración...");
+            console.error("Error en limpieza diaria:", e);
         }
     }
 
-    // Inicializar todo
+    // Inicializar
     initDB();
 
     return {
@@ -157,7 +185,7 @@ const App = (function() {
         init: initDB,
         ...CRUD,
         toast: showToast,
-        refreshTheme: applyThemeGlobal // Para llamar manualmente si hace falta
+        refreshTheme: applyThemeGlobal
     };
 
 })();

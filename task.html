@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tareas Rápidas - Agenda Core</title>
+    
+    <script src="db.js"></script>
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* --- ESTÉTICA GLOBAL --- */
+        body {
+            background-image: radial-gradient(circle at 50% -15%, #1c1c1e 0%, #000000 60%);
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%; max-width: 480px; margin: 0 auto; 
+            padding: 20px; padding-top: env(safe-area-inset-top, 20px);
+        }
+
+        /* Header */
+        header {
+            display: flex; align-items: center; gap: 20px;
+            margin-bottom: 30px;
+        }
+        .back-btn {
+            width: 45px; height: 45px;
+            background: rgba(255,255,255,0.08); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-primary); font-size: 1.4rem; text-decoration: none;
+            transition: background 0.3s; border: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+            padding-bottom: 2px;
+        }
+        .header-title {
+            font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px;
+            text-transform: uppercase;
+            background: linear-gradient(180deg, #ffffff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+
+        /* Input Nueva Tarea */
+        .add-box {
+            background: rgba(30, 32, 34, 0.6); backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border); border-radius: 20px;
+            padding: 15px; margin-bottom: 25px;
+            display: flex; gap: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .glass-input {
+            flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border);
+            color: white; padding: 12px; border-radius: 12px; font-size: 1rem; outline: none;
+        }
+        .btn-add {
+            background: var(--accent-blue); color: white; border: none;
+            width: 48px; border-radius: 12px; font-size: 1.5rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* Lista de Tareas */
+        .task-list {
+            display: flex; flex-direction: column; gap: 10px;
+            padding-bottom: 40px;
+        }
+
+        .task-card {
+            background: rgba(30, 32, 34, 0.72); backdrop-filter: blur(30px);
+            border: 1px solid var(--card-border); border-radius: 16px;
+            padding: 15px;
+            display: flex; align-items: center; gap: 15px;
+            transition: all 0.2s ease;
+        }
+        
+        .task-card.done {
+            opacity: 0.6;
+            background: rgba(255,255,255,0.03);
+            border-color: transparent;
+        }
+
+        /* Checkbox Custom */
+        .chk-box {
+            width: 24px; height: 24px; border-radius: 8px;
+            border: 2px solid var(--text-secondary);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+        }
+        .task-card.done .chk-box {
+            background: var(--accent-green); border-color: var(--accent-green);
+        }
+        .chk-box::after { content: '✔'; font-size: 0.9rem; color: black; display: none; font-weight: 800; }
+        .task-card.done .chk-box::after { display: block; }
+
+        .task-text { 
+            font-size: 1rem; color: var(--text-primary); flex: 1; 
+            word-break: break-word; line-height: 1.4;
+        }
+        .task-card.done .task-text { text-decoration: line-through; color: var(--text-muted); }
+
+        /* Botones de acción (Editar/Borrar) */
+        .actions { display: flex; gap: 10px; }
+        .icon-btn {
+            background: rgba(255,255,255,0.05); border: none;
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; cursor: pointer; color: var(--text-secondary);
+            transition: 0.2s;
+        }
+        .icon-btn:hover { background: rgba(255,255,255,0.1); color: white; }
+        .btn-del { color: var(--accent-red); }
+
+        /* Info pie de página */
+        .info-footer {
+            text-align: center; margin-top: 30px; 
+            color: var(--text-muted); font-size: 0.8rem; opacity: 0.7;
+        }
+        .btn-clean {
+            background: none; border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-secondary); padding: 8px 16px; border-radius: 20px;
+            margin-top: 10px; cursor: pointer; font-size: 0.8rem;
+        }
+
+        /* Modal Editar */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: #1c1c1e; width: 90%; max-width: 400px;
+            padding: 20px; border-radius: 20px; border: 1px solid var(--card-border);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <header>
+            <a href="index.html" class="back-btn">←</a>
+            <h1 class="header-title">MIS TAREAS</h1>
+        </header>
+
+        <div class="add-box">
+            <input type="text" id="new-task-input" class="glass-input" placeholder="Escribe una tarea nueva...">
+            <button class="btn-add" onclick="addTask()">＋</button>
+        </div>
+
+        <div id="task-list" class="task-list">
+            </div>
+
+        <div class="info-footer">
+            <p>Las tareas completadas se borran automáticamente a las 00:00.</p>
+            <button class="btn-clean" onclick="cleanNow()">🧹 Borrar completadas ahora</button>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="edit-modal">
+        <div class="modal-content">
+            <h3 style="color:white; margin-bottom:15px;">Editar Tarea</h3>
+            <input type="text" id="edit-input" class="glass-input" style="width:100%; box-sizing:border-box;">
+            <div style="display:flex; gap:10px; margin-top:15px; justify-content:flex-end;">
+                <button class="icon-btn" style="width:auto; padding:0 15px;" onclick="closeModal()">Cancelar</button>
+                <button class="icon-btn" style="width:auto; padding:0 15px; background:var(--accent-blue); color:white;" onclick="saveEdit()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Usamos el store 'tasks' definido en tu db.js actualizado
+        const STORE = 'tasks'; 
+        let currentEditId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await App.init();
+            loadTasks();
+        });
+
+        async function loadTasks() {
+            const tasks = await App.read(STORE);
+            // Ordenar: Pendientes primero, luego por fecha
+            tasks.sort((a,b) => {
+                if (a.done === b.done) {
+                    return new Date(b.createdAt) - new Date(a.createdAt);
+                }
+                return a.done ? 1 : -1;
+            });
+            render(tasks);
+        }
+
+        function render(tasks) {
+            const container = document.getElementById('task-list');
+            container.innerHTML = '';
+
+            if (tasks.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">No hay tareas pendientes. <br>¡Disfruta el día! 🎉</div>';
+                return;
+            }
+
+            tasks.forEach(t => {
+                const div = document.createElement('div');
+                div.className = `task-card ${t.done ? 'done' : ''}`;
+                
+                div.innerHTML = `
+                    <div class="chk-box" onclick="toggleTask(${t.id})"></div>
+                    <div class="task-text">${t.text}</div>
+                    
+                    <div class="actions">
+                        <button class="icon-btn" onclick="openEdit(${t.id}, '${t.text.replace(/'/g, "\\'")}')">✎</button>
+                        <button class="icon-btn btn-del" onclick="deleteTask(${t.id})">🗑</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- CRUD ---
+
+        async function addTask() {
+            const input = document.getElementById('new-task-input');
+            const text = input.value.trim();
+            if(!text) return;
+
+            await App.create(STORE, {
+                text: text,
+                done: false,
+                createdAt: new Date().toISOString()
+            });
+
+            input.value = '';
+            loadTasks();
+        }
+
+        async function toggleTask(id) {
+            const task = await App.readOne(STORE, id);
+            task.done = !task.done;
+            
+            // Efecto visual instantáneo antes de la DB (mejora UX)
+            loadTasks(); 
+            
+            await App.update(STORE, task);
+            loadTasks();
+        }
+
+        async function deleteTask(id) {
+            if(confirm("¿Eliminar esta tarea?")) {
+                await App.delete(STORE, id);
+                loadTasks();
+            }
+        }
+
+        // --- Edición (Modal) ---
+
+        function openEdit(id, text) {
+            currentEditId = id;
+            document.getElementById('edit-input').value = text;
+            document.getElementById('edit-modal').classList.add('active');
+            document.getElementById('edit-input').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('edit-modal').classList.remove('active');
+            currentEditId = null;
+        }
+
+        async function saveEdit() {
+            const newText = document.getElementById('edit-input').value.trim();
+            if(!newText) return;
+
+            const task = await App.readOne(STORE, currentEditId);
+            task.text = newText;
+            
+            await App.update(STORE, task);
+            closeModal();
+            loadTasks();
+        }
+
+        // --- Utilidades ---
+
+        async function cleanNow() {
+            if(!confirm("¿Borrar todas las tareas marcadas como completadas?")) return;
+            
+            const all = await App.read(STORE);
+            for(const t of all) {
+                if(t.done) await App.delete(STORE, t.id);
+            }
+            App.toast("Limpieza completada");
+            loadTasks();
+        }
+
+    </script>
+</body>
+</html>

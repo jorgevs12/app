@@ -9,36 +9,31 @@
     <script src="db.js"></script>
 
     <style>
-        /* Estilos específicos de Ajustes que complementan style.css */
-        
-        .header-nav {
-            display: flex; align-items: center; gap: 15px; margin-bottom: 30px;
-        }
+        /* Estilos específicos de Ajustes */
+        .header-nav { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; }
         .header-title { font-size: 2rem; font-weight: 800; margin: 0; }
-
         .section-label {
-            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px;
-            color: var(--text-muted); margin: 30px 0 10px 15px; font-weight: 600;
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-muted); margin: 30px 0 10px 15px; font-weight: 700;
         }
 
-        /* Lista de Ajustes estilo iOS */
         .settings-card {
-            background: var(--card-glass);
+            background: var(--card-bg);
             border: 1px solid var(--card-border);
-            border-radius: var(--radius);
+            border-radius: 20px;
             overflow: hidden;
             display: flex; flex-direction: column;
+            backdrop-filter: blur(var(--blur-strength));
         }
 
         .settings-item {
             display: flex; align-items: center; justify-content: space-between;
             padding: 18px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
             width: 100%; text-align: left;
             color: var(--text-primary); font-size: 1rem;
             background: transparent; border-left: none; border-right: none; border-top: none;
-            cursor: pointer;
-            transition: background 0.2s;
+            cursor: pointer; transition: background 0.2s;
         }
         .settings-item:active { background: rgba(255,255,255,0.05); }
         .settings-item:last-child { border-bottom: none; }
@@ -47,18 +42,18 @@
 
         .item-left { display: flex; align-items: center; gap: 15px; }
         .icon-box {
-            width: 32px; height: 32px; border-radius: 8px;
+            width: 36px; height: 36px; border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
             color: white; font-size: 1.1rem;
         }
 
         .item-text { font-weight: 500; display: flex; flex-direction: column; }
-        .item-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+        .item-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; font-weight: 400; }
 
-        /* Icon Colors */
-        .bg-blue { background: #0A84FF; box-shadow: 0 0 15px rgba(10, 132, 255, 0.3); }
-        .bg-purple { background: #BF5AF2; box-shadow: 0 0 15px rgba(191, 90, 242, 0.3); }
-        .bg-orange { background: #FF9F0A; box-shadow: 0 0 15px rgba(255, 159, 10, 0.3); }
+        /* Colores */
+        .bg-blue { background: #0A84FF; }
+        .bg-purple { background: #BF5AF2; }
+        .bg-orange { background: #FF9F0A; }
         .bg-red { background: rgba(255, 69, 58, 0.2); color: #ff453a; }
         .bg-gray { background: #3a3a3c; }
 
@@ -72,16 +67,15 @@
         .slider:before {
             position: absolute; content: ""; height: 26px; width: 26px;
             left: 2px; bottom: 2px; background-color: white; border-radius: 50%;
-            transition: .3s; box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            transition: .3s;
         }
         input:checked + .slider { background-color: var(--accent-green); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* Color Picker */
-        .color-row { display: flex; gap: 15px; padding: 5px 0; justify-content: flex-start; }
+        .color-row { display: flex; gap: 15px; padding: 10px; justify-content: space-around; }
         .color-circle {
-            width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
-            border: 3px solid transparent; transition: transform 0.2s, border-color 0.2s;
+            width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+            border: 3px solid transparent; transition: 0.2s;
         }
         .color-circle.active { border-color: white; transform: scale(1.1); }
     </style>
@@ -91,48 +85,28 @@
 <div class="container">
     
     <div class="header-nav">
-        <a href="index.html" style="color:var(--text-primary); display:flex; align-items:center; text-decoration:none;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        </a>
+        <a href="index.html" class="back-btn" style="text-decoration: none; font-size: 1.5rem;">←</a>
         <h1 class="header-title">Ajustes</h1>
     </div>
 
     <div class="section-label">Personalización</div>
-    <div class="settings-card" style="padding: 20px;">
-        <div style="margin-bottom: 15px; font-weight:600;">Color de Acento</div>
+    <div class="settings-card" style="padding: 15px;">
+        <div style="margin-bottom: 10px; font-size: 0.9rem; padding-left: 10px;">Color de Acento</div>
         <div class="color-row">
-            <div class="color-circle" style="background:#0A84FF;" onclick="changeColor('#0A84FF')"></div>
-            <div class="color-circle" style="background:#30d158;" onclick="changeColor('#30d158')"></div>
-            <div class="color-circle" style="background:#FF9F0A;" onclick="changeColor('#FF9F0A')"></div>
-            <div class="color-circle" style="background:#BF5AF2;" onclick="changeColor('#BF5AF2')"></div>
-            <div class="color-circle" style="background:#FF453A;" onclick="changeColor('#FF453A')"></div>
+            <div class="color-circle" style="background:#3b82f6;" onclick="changeColor('#3b82f6')"></div>
+            <div class="color-circle" style="background:#10b981;" onclick="changeColor('#10b981')"></div>
+            <div class="color-circle" style="background:#f59e0b;" onclick="changeColor('#f59e0b')"></div>
+            <div class="color-circle" style="background:#8b5cf6;" onclick="changeColor('#8b5cf6')"></div>
+            <div class="color-circle" style="background:#ef4444;" onclick="changeColor('#ef4444')"></div>
         </div>
     </div>
 
     <div class="section-label">Sistema</div>
     <div class="settings-card">
-        
-        <div class="settings-item no-action">
-            <div class="item-left">
-                <div class="icon-box bg-blue">💧</div>
-                <div class="item-text">
-                    Efecto Blur
-                    <span class="item-desc">Transparencias estilo cristal</span>
-                </div>
-            </div>
-            <label class="switch">
-                <input type="checkbox" id="check-blur" onchange="toggleSetting('enableBlur', this.checked)">
-                <span class="slider"></span>
-            </label>
-        </div>
-
         <div class="settings-item no-action">
             <div class="item-left">
                 <div class="icon-box bg-purple">📳</div>
-                <div class="item-text">
-                    Vibración
-                    <span class="item-desc">Feedback háptico al tocar</span>
-                </div>
+                <div class="item-text">Vibración Hápica<span class="item-desc">Feedback al tocar elementos</span></div>
             </div>
             <label class="switch">
                 <input type="checkbox" id="check-haptic" onchange="toggleSetting('enableHaptic', this.checked)">
@@ -141,160 +115,98 @@
         </div>
     </div>
 
-    <div class="section-label">Base de Datos</div>
+    <div class="section-label">Copia de Seguridad</div>
     <div class="settings-card">
-        
         <button class="settings-item" onclick="exportFullBackup()">
             <div class="item-left">
                 <div class="icon-box bg-orange">📦</div>
-                <div class="item-text">
-                    Exportar Copia de Seguridad
-                    <span class="item-desc">Guarda todos tus datos en un archivo</span>
-                </div>
+                <div class="item-text">Exportar Todo<span class="item-desc">Salud, Finanzas, Horario y Tareas</span></div>
             </div>
-            <svg width="20" height="20" stroke="rgba(255,255,255,0.3)" fill="none" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>➔</span>
         </button>
 
         <button class="settings-item" onclick="document.getElementById('file-input').click()">
             <div class="item-left">
-                <div class="icon-box bg-gray">📥</div>
-                <div class="item-text">
-                    Restaurar Datos
-                    <span class="item-desc">Importar archivo .json</span>
-                </div>
+                <div class="icon-box bg-blue">📥</div>
+                <div class="item-text">Restaurar Copia<span class="item-desc">Carga un archivo .json previo</span></div>
             </div>
-            <svg width="20" height="20" stroke="rgba(255,255,255,0.3)" fill="none" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>➔</span>
         </button>
         <input type="file" id="file-input" accept=".json" style="display:none" onchange="importFullBackup(event)">
     </div>
 
-    <div class="section-label">Zona de Peligro</div>
-    <div class="settings-card" style="border-color: rgba(255,69,58,0.3);">
+    <div class="section-label">Seguridad</div>
+    <div class="settings-card" style="border-color: rgba(239, 68, 68, 0.2);">
         <button class="settings-item danger" onclick="resetDatabase()">
             <div class="item-left">
                 <div class="icon-box bg-red">🗑️</div>
-                <div class="item-text">Borrar Todo</div>
+                <div class="item-text">Restablecer Sistema</div>
             </div>
         </button>
     </div>
-
 </div>
 
 <script>
-    // Configuración por defecto
-    const DEFAULT_CONFIG = {
-        accentColor: '#0A84FF',
-        enableBlur: true,
-        enableHaptic: true
-    };
-
-    // --- INICIALIZACIÓN ---
     async function initSettings() {
-        // Inicializar DB primero
         await App.init();
         
-        // Cargar Configuración desde AppDB
-        const config = await App.getAllConfig();
+        // Cargar config guardada
+        const haptic = await App.getConfig('enableHaptic');
+        document.getElementById('check-haptic').checked = haptic === true;
         
-        // Mezclar con defaults por si falta algo
-        const settings = { ...DEFAULT_CONFIG, ...config };
-
-        // Actualizar UI
-        document.getElementById('check-blur').checked = settings.enableBlur;
-        document.getElementById('check-haptic').checked = settings.enableHaptic;
-        
-        updateActiveColor(settings.accentColor);
-        applyTheme(settings);
+        const color = await App.getConfig('accentColor') || '#3b82f6';
+        updateActiveColor(color);
     }
-
-    // --- LÓGICA DE AJUSTES ---
 
     async function toggleSetting(key, value) {
         await App.setConfig(key, value);
-        
-        // Efecto inmediato
         if (key === 'enableHaptic' && value && navigator.vibrate) navigator.vibrate(20);
-        
-        // Recargar tema visual
-        const allConfig = await App.getAllConfig();
-        applyTheme({ ...DEFAULT_CONFIG, ...allConfig });
     }
 
     async function changeColor(color) {
         await App.setConfig('accentColor', color);
+        document.documentElement.style.setProperty('--accent-blue', color);
         updateActiveColor(color);
-        
-        // Aplicar visualmente
-        const root = document.documentElement;
-        root.style.setProperty('--accent-blue', color);
-        root.style.setProperty('--accent-color', color); // Legacy support
+        if (App.toast) App.toast("Color actualizado");
     }
 
     function updateActiveColor(color) {
         document.querySelectorAll('.color-circle').forEach(c => {
-            const isActive = c.getAttribute('onclick').includes(color);
-            c.classList.toggle('active', isActive);
+            const circleColor = c.style.backgroundColor;
+            // Convertir a HEX si es necesario para comparar
+            c.classList.toggle('active', circleColor.includes(color) || color.includes(circleColor));
         });
     }
 
-    function applyTheme(settings) {
-        const root = document.documentElement;
-        
-        // Color
-        if(settings.accentColor) {
-            root.style.setProperty('--accent-blue', settings.accentColor);
-        }
-
-        // Blur (Esto afecta a style.css si usa var(--card-glass))
-        if(settings.enableBlur) {
-            root.style.setProperty('--card-glass', 'rgba(28, 28, 30, 0.75)');
-            document.body.style.backdropFilter = "none"; 
-        } else {
-            // Modo rendimiento: fondo sólido, sin blur
-            root.style.setProperty('--card-glass', '#1c1c1e');
-        }
-    }
-
-    // --- BACKUP & RESTORE (Usando App.STORES) ---
-
+    // --- LÓGICA DE EXPORTACIÓN TOTAL ---
     async function exportFullBackup() {
-        App.toast('Generando copia...', 'info');
-        
         try {
+            App.toast('Preparando paquete...', 'info');
             const backup = {
-                meta: { 
-                    date: new Date().toISOString(),
-                    version: '2.0'
-                },
-                data: {}
+                version: 2.0,
+                timestamp: new Date().toISOString(),
+                stores: {}
             };
 
-            // Iterar sobre todas las tablas definidas en db.js
-            const stores = Object.values(App.STORES);
-            
-            for (const storeName of stores) {
-                // Usamos App.read para obtener los datos
-                backup.data[storeName] = await App.read(storeName);
+            // Recorremos todos los stores definidos en db.js
+            for (const key in App.STORES) {
+                const storeName = App.STORES[key];
+                backup.stores[storeName] = await App.read(storeName);
             }
 
-            // Crear archivo descarga
             const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `AgendaPro_Backup_${new Date().toISOString().slice(0,10)}.json`;
-            document.body.appendChild(a);
+            a.download = `Backup_Total_${new Date().toISOString().slice(0,10)}.json`;
             a.click();
-            document.body.removeChild(a);
-            
-            App.toast('Copia exportada con éxito');
-
+            App.toast('Copia descargada');
         } catch (e) {
-            console.error(e);
             App.toast('Error al exportar', 'error');
         }
     }
 
+    // --- LÓGICA DE IMPORTACIÓN TOTAL ---
     async function importFullBackup(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -302,60 +214,49 @@
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
-                const json = JSON.parse(e.target.result);
-                if (!json.data) throw new Error("Formato inválido");
+                const backup = JSON.parse(e.target.result);
+                if (!backup.stores) throw new Error("Archivo no compatible");
 
-                App.toast('Restaurando datos...', 'info');
+                if (!confirm("Esto reemplazará todos los datos actuales por los de la copia. ¿Continuar?")) return;
 
-                // Iterar sobre los datos del JSON
-                for (const [storeName, items] of Object.entries(json.data)) {
-                    // Verificamos si la tienda existe en nuestra DB actual
-                    if (Object.values(App.STORES).includes(storeName)) {
-                        
-                        // Opcional: Limpiar tabla antes de importar (Descomentar si quieres reemplazar)
-                        // Para este ejemplo, agregamos sin borrar lo anterior para evitar accidentes
-                        
-                        for (const item of items) {
-                            // Si tiene ID, intentamos actualizar, si no, crear
-                            // Nota: Al importar, IDs pueden chocar. 
-                            // Estrategia segura: Eliminar ID y dejar que se genere uno nuevo
-                            const newItem = { ...item };
-                            delete newItem.id; 
-                            
-                            // Si es config, usamos put directo
-                            if (storeName === 'settings') {
-                                await App.setConfig(item.key, item.value);
-                            } else {
-                                await App.create(storeName, newItem);
-                            }
-                        }
+                App.toast('Restaurando...', 'info');
+
+                for (const storeName in backup.stores) {
+                    const items = backup.stores[storeName];
+                    
+                    // 1. Limpiar el store actual (Opcional pero recomendado para evitar basura)
+                    const existing = await App.read(storeName);
+                    for (const oldItem of existing) {
+                        await App.delete(storeName, oldItem.id);
+                    }
+
+                    // 2. Insertar los nuevos items
+                    for (const item of items) {
+                        // Eliminamos el ID antiguo para que IndexedDB genere nuevos o use los del backup
+                        // Si quieres mantener IDs exactos, asegúrate de que App.create use .put() internamente
+                        await App.create(storeName, item);
                     }
                 }
 
-                App.toast('Restauración completada');
-                setTimeout(() => window.location.reload(), 1500);
-
+                App.toast('Restauración exitosa');
+                setTimeout(() => window.location.reload(), 1000);
             } catch (err) {
-                console.error(err);
-                App.toast('Archivo corrupto o inválido', 'error');
+                App.toast('Error: Archivo inválido', 'error');
             }
         };
         reader.readAsText(file);
-        event.target.value = ''; // Reset input
     }
 
     function resetDatabase() {
-        if (confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsto borrará permanentemente todos los datos: salud, notas, finanzas, etc.\n\nEsta acción no se puede deshacer.")) {
-            // IndexedDB delete
+        if (confirm("⚠️ ¿BORRAR TODO?\nSe perderán salud, gastos, tareas y horario para siempre.")) {
             const req = indexedDB.deleteDatabase('AgendaDB');
             req.onsuccess = () => {
-                alert("Sistema restablecido.");
+                alert("Datos borrados. Reiniciando...");
                 window.location.href = 'index.html';
             };
-            req.onerror = () => alert("Error al borrar.");
         }
     }
-
 </script>
+
 </body>
 </html>

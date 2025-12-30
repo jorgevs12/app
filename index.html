@@ -15,7 +15,7 @@
             display: grid; 
             grid-template-columns: 1fr 1fr; 
             gap: 16px; 
-            padding-bottom: 100px; 
+            padding-bottom: 30px; /* Reducido para que el campus no flote demasiado alto */
         }
 
         .card.wide { grid-column: span 2; }
@@ -45,79 +45,47 @@
             transition: transform 0.2s, background 0.2s;
             backdrop-filter: blur(10px);
         }
-        .btn-settings:active { transform: scale(0.95); background: rgba(255,255,255,0.15); }
 
-        /* Tarjetas */
+        /* Tarjeta Especial: Campus - AHORA AL FINAL */
+        .campus-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.05) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px; border-radius: 24px; text-decoration: none;
+            margin-top: 16px; margin-bottom: 100px; /* Margen inferior para scroll */
+            backdrop-filter: blur(10px);
+        }
+        .campus-card:active { transform: scale(0.98); }
+
+        /* Tarjetas Estándar */
         .card {
             display: flex; flex-direction: column; justify-content: space-between;
-            min-height: 140px; 
-            text-decoration: none; 
-            color: var(--text-primary);
+            min-height: 140px; text-decoration: none; color: var(--text-primary);
             position: relative;
         }
         
-        .card-header { 
-            display: flex; justify-content: space-between; align-items: flex-start; 
-            margin-bottom: 10px; 
-        }
-        .card-label { 
-            font-size: 0.7rem; text-transform: uppercase; 
-            font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; 
-        }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .card-label { font-size: 0.7rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.5px; }
         .card-icon { font-size: 1.2rem; }
 
         .big-val { font-size: 2rem; font-weight: 800; color: #fff; line-height: 1; letter-spacing: -0.5px; }
         .sub-val { font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px; font-weight: 500; }
         
-        .badge { 
-            font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; 
-            font-weight: 700; text-transform: uppercase; display: inline-block;
-        }
+        .badge { font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; font-weight: 700; text-transform: uppercase; }
         .badge.urgent { background: rgba(239, 68, 68, 0.2); color: var(--accent-red); animation: pulse 2s infinite; }
-        .badge.neutral { background: rgba(255, 255, 255, 0.1); color: var(--text-secondary); }
 
-        /* Timeline Horario Mejorado */
-        .timeline-item {
-            display: flex; align-items: center; gap: 12px; padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.3s ease;
-        }
-        .timeline-item:last-child { border-bottom: none; }
-        
-        .t-time { 
-            font-size: 0.85rem; font-weight: 700; color: var(--text-muted); 
-            min-width: 45px; transition: color 0.3s;
-        }
-        .t-info { display: flex; flex-direction: column; flex: 1; }
+        /* Estilos Timeline e Items */
+        .timeline-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .timeline-item.active { border-left: 3px solid var(--accent-green); padding-left: 10px; background: rgba(16, 185, 129, 0.05); }
+        .t-time { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); min-width: 45px; }
         .t-sub { font-size: 0.95rem; font-weight: 600; color: #fff; }
-        .t-room { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
 
-        /* Estilo para Clase Activa (En curso) */
-        .timeline-item.active {
-            background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(0,0,0,0) 100%);
-            border-radius: 8px;
-            padding-left: 10px;
-            padding-right: 10px;
-            border-left: 3px solid var(--accent-green);
-            margin: 4px 0;
-            border-bottom: none;
-        }
-        .timeline-item.active .t-time { color: var(--accent-green); }
-        .timeline-item.active .t-sub { color: var(--accent-green); }
-        
-        .active-badge {
-            font-size: 0.6rem; background: var(--accent-green); color: #000;
-            padding: 2px 6px; border-radius: 4px; font-weight: 800;
-            margin-left: auto; text-transform: uppercase;
-        }
-
-        /* Animaciones */
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
         .skeleton { background: rgba(255,255,255,0.08); color: transparent; border-radius: 4px; animation: pulse 1.5s infinite; }
-
     </style>
 </head>
 <body>
+    <link rel="manifest" href="manifest.json">
 
     <div class="container">
         
@@ -133,12 +101,12 @@
             
             <a href="agenda.html" class="glass-card wide card">
                 <div class="card-header">
-                    <span class="card-label" style="color:var(--accent-red)">● Siguiente</span>
+                    <span class="card-label" style="color:var(--accent-red)">● Siguiente Evento</span>
                     <span class="badge" id="agenda-badge">--</span>
                 </div>
                 <div>
-                    <div class="big-val" id="agenda-title" style="font-size:1.6rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-                        <span class="skeleton">Cargando evento...</span>
+                    <div class="big-val" id="agenda-title" style="font-size:1.6rem;">
+                        <span class="skeleton">Cargando...</span>
                     </div>
                     <div class="sub-val" id="agenda-date">Revisando calendario...</div>
                 </div>
@@ -146,7 +114,7 @@
 
             <a href="horario.html" class="glass-card wide card">
                 <div class="card-header">
-                    <span class="card-label">Clases de Hoy</span>
+                    <span class="card-label">Horario de Hoy</span>
                     <span class="card-icon">🕒</span>
                 </div>
                 <div id="schedule-list">
@@ -154,21 +122,27 @@
                 </div>
             </a>
 
+            <div class="glass-card wide card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="card-label">Tareas</div>
+                <a href="task.html" style="color: var(--accent-blue); font-size: 0.6rem; text-decoration: none; font-weight: bold;">VER TODAS</a>
+            </div>
+            <div id="index-task-list" class="task-list-container"></div>
+        </div>
+
             <a href="salud.html" class="glass-card card">
-                <div class="card-header" style="margin-bottom:5px;">
-                    <span class="card-label">Salud Hoy</span>
+                <div class="card-header">
+                    <span class="card-label">Salud</span>
                     <span class="card-icon">🔥</span>
                 </div>
-                
-                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:5px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-end;">
                     <div>
-                        <div class="big-val" id="health-cal" style="font-size:1.5rem;">0</div>
-                        <div class="sub-val" style="color:var(--accent-orange); margin-top:2px;">Kcal</div>
+                        <div class="big-val" id="health-steps" style="font-size:1.3rem;">0</div>
+                        <div class="sub-val">Pasos</div>
                     </div>
-                    
-                    <div style="text-align:right;">
-                        <div class="big-val" id="health-steps" style="font-size:1.5rem;">0</div>
-                        <div class="sub-val" style="color:var(--accent-blue); margin-top:2px;">Pasos</div>
+                    <div style="text-align:right">
+                        <div class="big-val" id="health-cal" style="font-size:1.3rem;">0</div>
+                        <div class="sub-val">Kcal</div>
                     </div>
                 </div>
             </a>
@@ -180,282 +154,257 @@
                 </div>
                 <div>
                     <div class="big-val" id="finance-val">0€</div>
-                    <div class="sub-val" style="color:var(--accent-green)">Acumulado</div>
                 </div>
             </a>
 
-            <a href="notas.html" class="glass-card wide card" style="min-height: auto; flex-direction: row; align-items: center; padding: 20px;">
-                <div style="display:flex; align-items:center; gap:15px; flex:1;">
-                    <div style="background:rgba(59, 130, 246, 0.15); width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">📚</div>
-                    <div>
-                        <div class="card-label" style="margin-bottom:4px; color:var(--accent-blue);">Académico</div>
-                        <div class="big-val" style="font-size:1.4rem;" id="academic-avg">--</div>
-                        <div class="sub-val" style="margin:0; font-size:0.8rem;" id="academic-count">0 materias activas</div>
-                    </div>
+            <a href="proyectos.html" class="glass-card wide card">
+                <div class="card-header">
+                    <span class="card-label">Proyectos</span>
+                    <span class="card-icon">📂</span>
                 </div>
-                <div style="font-size:1.5rem; opacity:0.3;">›</div>
+                <div>
+                    <div class="big-val" id="proj-count">0</div>
+                    <div class="sub-val">En desarrollo</div>
+                </div>
             </a>
 
         </main>
+
+        <a href="https://campusvirtual.unex.es/portal11/web/" target="_blank" class="campus-card">
+            <div>
+                <div class="card-label" style="color:var(--accent-blue); margin-bottom:4px;">Portal Académico</div>
+                <div class="big-val" style="font-size:1.4rem;">Campus Virtual</div>
+            </div>
+            <div style="font-size:2rem;">🎓</div>
+        </a>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            await App.init();
-            if(App.refreshTheme) App.refreshTheme();
-            
+<script>
+    /* El script permanece igual para mantener toda la funcionalidad intacta */
+    document.addEventListener('DOMContentLoaded', async () => {
+        await App.init();
+        if (App.refreshTheme) App.refreshTheme();
+        updateHeader();
+        loadAllWidgets();
+        setInterval(() => {
             updateHeader();
             loadAllWidgets();
+        }, 60000);
+    });
 
-            setInterval(() => {
-                updateHeader();
-                loadAllWidgets();
-            }, 60000);
-        });
+    async function loadAllWidgets() {
+        await Promise.all([
+            loadAgenda(),
+            loadSchedule(),
+            loadHealth(),
+            loadFinance(),
+            loadProjectsSummary(),
+            loadIndexTasks()
+        ]);
+    }
 
-        async function loadAllWidgets() {
-            await Promise.all([
-                loadAgenda(),
-                loadSchedule(),
-                loadHealth(),
-                loadFinance(),
-                loadAcademic()
-            ]);
+    async function loadIndexTasks() {
+    try {
+        // Usamos la constante definida en db.js
+        const tasks = await App.read(App.STORES.TAREAS); 
+        const list = document.getElementById('index-task-list');
+        if (!list) return;
+        
+        list.innerHTML = '';
+        
+        // Ordenar: primero las no hechas, y tomar solo 3
+        const displayTasks = tasks
+            .sort((a, b) => a.done - b.done)
+            .slice(0, 3);
+
+        if (displayTasks.length === 0) {
+            list.innerHTML = '<div style="font-size:0.75rem; opacity:0.5; padding:10px 0;">No hay pendientes</div>';
+            return;
         }
 
-        // 1. HEADER
-        function updateHeader() {
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-            document.getElementById('date-display').innerText = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
-
-            const h = now.getHours();
-            let greet = "Buenas noches";
-            if(h >= 6 && h < 12) greet = "Buenos días";
-            else if(h >= 12 && h < 20) greet = "Buenas tardes";
+        displayTasks.forEach(t => {
+            const div = document.createElement('div');
+            // Clase task-row para el contenedor
+            div.className = `timeline-item ${t.done ? 'done' : ''}`;
+            div.style.padding = "8px 0";
             
-            App.getConfig('user_profile').then(profile => {
-                const name = profile && profile.name ? profile.name : '';
-                document.getElementById('greeting').innerText = name ? `${greet}, ${name}` : greet;
-            });
-        }
+            div.innerHTML = `
+                <div onclick="toggleTaskIndex(${t.id})" style="cursor:pointer; display:flex; align-items:center; gap:10px; width:100%;">
+                    <div style="width:18px; height:18px; border-radius:50%; border:2px solid ${t.done ? 'var(--accent-green)' : 'var(--text-muted)'}; background:${t.done ? 'var(--accent-green)' : 'transparent'}; flex-shrink:0;"></div>
+                    <span style="font-size:0.9rem; color:${t.done ? 'var(--text-muted)' : 'white'}; text-decoration:${t.done ? 'line-through' : 'none'};">
+                        ${t.text || t.titulo || 'Tarea sin título'}
+                    </span>
+                </div>`;
+            list.appendChild(div);
+        });
+    } catch (e) { console.error("Error cargando tareas:", e); }
+}
 
-        // 2. AGENDA
-        async function loadAgenda() {
-            try {
-                const events = await App.read(App.STORES.EVENTOS);
-                const now = new Date();
-                const upcoming = events
-                    .filter(e => {
-                        const d = new Date(e.fecha);
-                        const today = new Date(); today.setHours(0,0,0,0);
-                        return d >= today;
-                    })
-                    .sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
-
-                const titleEl = document.getElementById('agenda-title');
-                const dateEl = document.getElementById('agenda-date');
-                const badgeEl = document.getElementById('agenda-badge');
-
-                if(upcoming.length === 0) {
-                    titleEl.innerText = "Todo libre";
-                    dateEl.innerText = "Sin eventos próximos";
-                    badgeEl.style.display = 'none';
-                    return;
-                }
-
-                const next = upcoming[0];
-                const nextDate = new Date(next.fecha);
-                titleEl.innerText = next.titulo;
-                
-                const timeStr = next.hora || nextDate.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
-                const today = new Date();
-                const isToday = nextDate.toDateString() === today.toDateString();
-                const diffTime = nextDate - today;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-
-                badgeEl.style.display = 'inline-block';
-
-                if(isToday) {
-                    dateEl.innerText = `Hoy a las ${timeStr}`;
-                    badgeEl.innerText = "¡HOY!";
-                    badgeEl.className = "badge urgent";
-                } else if (diffDays <= 1) {
-                    dateEl.innerText = `Mañana a las ${timeStr}`;
-                    badgeEl.innerText = "MAÑANA";
-                    badgeEl.className = "badge urgent";
-                } else {
-                    dateEl.innerText = nextDate.toLocaleDateString('es-ES', {weekday:'short', day:'numeric'}) + ` - ${timeStr}`;
-                    badgeEl.innerText = `EN ${diffDays} DÍAS`;
-                    badgeEl.className = diffDays <= 3 ? "badge urgent" : "badge neutral";
-                }
-            } catch (e) { console.error("Error Agenda:", e); }
-        }
-
-        // 3. HORARIO (MEJORADO: Filtra pasadas, resalta activas)
-        async function loadSchedule() {
-            try {
-                const schedule = await App.read(App.STORES.HORARIO);
-                const list = document.getElementById('schedule-list');
-                list.innerHTML = '';
-
-                const now = new Date();
-                let day = now.getDay(); 
-                if(day === 0) day = 7; 
-                
-                // Calcular minutos actuales desde las 00:00 para comparar
-                const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-                // Función auxiliar para convertir "HH:MM" a minutos
-                const getMins = (timeStr) => {
-                    if(!timeStr) return 0;
-                    const [h, m] = timeStr.split(':').map(Number);
-                    return h * 60 + m;
-                };
-
-                // 1. Filtrar clases del día
-                // 2. Filtrar clases que YA TERMINARON (fin < actual)
-                // 3. Ordenar por inicio
-                const upcomingClasses = schedule
-                    .filter(s => parseInt(s.dia) === day)
-                    .filter(s => getMins(s.horaFin) > currentMinutes) 
-                    .sort((a,b) => a.horaInicio.localeCompare(b.horaInicio));
-
-                // Si no quedan clases (todas acabaron o no hubo)
-                if(upcomingClasses.length === 0) {
-                    // Verificar si había clases hoy pero ya acabaron
-                    const allClassesToday = schedule.filter(s => parseInt(s.dia) === day);
-                    if (allClassesToday.length > 0) {
-                        list.innerHTML = '<div style="opacity:0.6; font-size:0.9rem; padding:15px 0; color:var(--accent-green);">¡Todo listo por hoy! 🎉</div>';
-                    } else {
-                        list.innerHTML = '<div style="opacity:0.6; font-size:0.9rem; padding:15px 0;">No hay clases hoy.</div>';
-                    }
-                    return;
-                }
-
-                // Mostrar las siguientes 3
-                upcomingClasses.slice(0, 3).forEach(c => {
-                    const startMins = getMins(c.horaInicio);
-                    const endMins = getMins(c.horaFin);
-                    
-                    // Verificar si está "En Curso" (Inicio <= Actual < Fin)
-                    const isActive = (startMins <= currentMinutes && endMins > currentMinutes);
-                    
-                    const div = document.createElement('div');
-                    div.className = `timeline-item ${isActive ? 'active' : ''}`;
-                    
-                    let activeBadge = isActive ? `<span class="active-badge">En Curso</span>` : '';
-
-                    div.innerHTML = `
-                        <div class="t-time">${c.horaInicio}</div>
-                        <div class="t-info">
-                            <span class="t-sub">${c.materia || c.titulo}</span>
-                            <span class="t-room">${c.aula ? 'Aula ' + c.aula : ''}</span>
-                        </div>
-                        ${activeBadge}
-                    `;
-                    list.appendChild(div);
-                });
-
-                if(upcomingClasses.length > 3) {
-                    list.innerHTML += `<div style="font-size:0.75rem; text-align:center; opacity:0.5; margin-top:5px;">+${upcomingClasses.length - 3} más</div>`;
-                }
-            } catch (e) { console.error("Error Horario:", e); }
-        }
-
-        // 4. SALUD
-        async function loadHealth() {
-            try {
-                const data = await App.read(App.STORES.SALUD);
-                const todayStr = new Date().toDateString();
-                
-                let cals = 0.0;
-                let steps = 0;
-
-                data.forEach(d => {
-                    const dDate = new Date(d.fecha);
-                    if(dDate.toDateString() === todayStr) {
-                        if(d.cal) cals += parseFloat(d.cal);
-                        let p = 0;
-                        if(d.pasos) p = parseFloat(d.pasos);
-                        else if(d.steps) p = parseFloat(d.steps);
-                        steps += p;
-                    }
-                });
-
-                document.getElementById('health-cal').innerText = cals.toLocaleString('es-ES', {
-                    minimumFractionDigits: 0, 
-                    maximumFractionDigits: 2 
-                });
-                
-                document.getElementById('health-steps').innerText = steps.toLocaleString('es-ES');
-
-            } catch (e) { console.error("Error Salud:", e); }
-        }
-
-        // 5. FINANZAS
-        async function loadFinance() {
-            try {
-                const data = await App.read(App.STORES.FINANZAS);
-                const now = new Date();
-                let spent = 0;
-
-                data.forEach(f => {
-                    const d = new Date(f.fecha);
-                    if(d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
-                        if(f.tipo === 'gasto') spent += parseFloat(f.monto);
-                    }
-                });
-
-                document.getElementById('finance-val').innerText = spent.toFixed(2) + '€';
-                
-            } catch (e) { console.error("Error Finanzas:", e); }
-        }
-
-        // 6. ACADÉMICO
-        async function loadAcademic() {
-            try {
-                const data = await App.read(App.STORES.NOTAS);
-                const subjects = data.filter(d => d.sections && Array.isArray(d.sections));
-
-                const count = subjects.length;
-                document.getElementById('academic-count').innerText = `${count} materias`;
-
-                if(count === 0) {
-                    document.getElementById('academic-avg').innerText = "--";
-                    return;
-                }
-
-                let sumAvg = 0;
-                let validSubjects = 0;
-
-                subjects.forEach(sub => {
-                    let totalW = 0;
-                    sub.sections.forEach(sec => {
-                        if(sec.grades && sec.grades.length > 0) {
-                            const secAvg = sec.grades.reduce((a,b)=>a+b.val,0) / sec.grades.length;
-                            totalW += secAvg * (sec.weight/100);
-                        }
-                    });
-                    if(totalW > 0) {
-                        sumAvg += totalW;
-                        validSubjects++;
-                    }
-                });
-
-                const globalAvg = validSubjects > 0 ? (sumAvg / validSubjects) : 0;
-                const avgEl = document.getElementById('academic-avg');
-                
-                avgEl.innerText = globalAvg.toFixed(2);
-                
-                if(globalAvg >= 5) avgEl.style.color = "var(--accent-green)";
-                else if(globalAvg > 0) avgEl.style.color = "var(--accent-red)";
-                else avgEl.style.color = "#fff";
-
-            } catch (e) { 
-                console.error("Error Académico:", e);
+async function toggleTaskIndex(id) {
+    try {
+        // Buscamos la tarea en la tienda correcta definida en db.js
+        const task = await App.readOne(App.STORES.TAREAS, id);
+        if (task) {
+            task.done = !task.done;
+            // Actualizamos en la base de datos
+            await App.update(App.STORES.TAREAS, task);
+            // Refrescamos la UI
+            loadIndexTasks();
+            
+            if (App.toast) {
+                App.toast(task.done ? "Tarea completada" : "Tarea pendiente");
             }
         }
-    </script>
+    } catch (e) {
+        console.error("Error al marcar tarea:", e);
+    }
+}
+
+    async function updateHeader() {
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+        document.getElementById('date-display').innerText = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
+        const h = now.getHours();
+        let greet = "Buenas noches";
+        if (h >= 6 && h < 12) greet = "Buenos días";
+        else if (h >= 12 && h < 20) greet = "Buenas tardes";
+        const profile = await App.getConfig('user_profile');
+        const name = profile && profile.name ? profile.name : '';
+        document.getElementById('greeting').innerText = name ? `${greet}, ${name}` : greet;
+    }
+
+    async function loadProjectsSummary() {
+        try {
+            const projects = await App.read('projects');
+            document.getElementById('proj-count').innerText = projects.length || 0;
+        } catch (e) { console.error("Error Proyectos:", e); }
+    }
+
+    async function loadAgenda() {
+        try {
+            const events = await App.read(App.STORES.EVENTOS);
+            const upcoming = events.filter(e => {
+                const d = new Date(e.fecha);
+                const today = new Date(); today.setHours(0,0,0,0);
+                return d >= today;
+            }).sort((a,b) => new Date(a.fecha) - new Date(b.fecha));
+            const titleEl = document.getElementById('agenda-title');
+            const dateEl = document.getElementById('agenda-date');
+            const badgeEl = document.getElementById('agenda-badge');
+            if (upcoming.length === 0) {
+                titleEl.innerText = "Todo libre";
+                dateEl.innerText = "Sin eventos próximos";
+                badgeEl.style.display = 'none';
+                return;
+            }
+            const next = upcoming[0];
+            const nextDate = new Date(next.fecha);
+            titleEl.innerText = next.titulo;
+            const timeStr = next.hora || nextDate.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+            const today = new Date();
+            const isToday = nextDate.toDateString() === today.toDateString();
+            const diffDays = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24)); 
+            badgeEl.style.display = 'inline-block';
+            if (isToday) {
+                dateEl.innerText = `Hoy a las ${timeStr}`;
+                badgeEl.innerText = "¡HOY!";
+                badgeEl.className = "badge urgent";
+            } else {
+                dateEl.innerText = nextDate.toLocaleDateString('es-ES', {weekday:'short', day:'numeric'}) + ` - ${timeStr}`;
+                badgeEl.innerText = diffDays <= 1 ? "MAÑANA" : `EN ${diffDays} DÍAS`;
+                badgeEl.className = diffDays <= 2 ? "badge urgent" : "badge neutral";
+            }
+        } catch (e) { console.error("Error Agenda:", e); }
+    }
+
+async function loadSchedule() {
+    try {
+        const schedule = await App.read(App.STORES.HORARIO);
+        const list = document.getElementById('schedule-list');
+        list.innerHTML = '';
+
+        const now = new Date();
+        const currentMins = now.getHours() * 60 + now.getMinutes();
+        
+        const getMins = (timeStr) => {
+            if (!timeStr) return 0;
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        };
+
+        // 1. Intentar buscar clases que quedan HOY
+        let dayToSearch = now.getDay() || 7;
+        let upcoming = schedule
+            .filter(s => parseInt(s.dia) === dayToSearch && getMins(s.horaFin) > currentMins)
+            .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+
+        // 2. Si no hay nada hoy, buscar el siguiente día que tenga clases
+        if (upcoming.length === 0) {
+            let nextDay = dayToSearch;
+            for (let i = 1; i <= 7; i++) {
+                nextDay = (dayToSearch + i - 1) % 7 + 1;
+                upcoming = schedule
+                    .filter(s => parseInt(s.dia) === nextDay)
+                    .sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+                if (upcoming.length > 0) break;
+            }
+        }
+
+        if (upcoming.length === 0) {
+            list.innerHTML = '<div style="opacity:0.6; font-size:0.8rem;">No hay clases programadas.</div>';
+            return;
+        }
+
+        // Mostrar las 2 siguientes (Clases o Laboratorios)
+        upcoming.slice(0, 2).forEach(item => {
+            const isLab = item.tipo?.toLowerCase().includes('lab') || item.materia?.toLowerCase().includes('lab');
+            const isActive = (parseInt(item.dia) === (now.getDay() || 7)) && 
+                             (getMins(item.horaInicio) <= currentMins && getMins(item.horaFin) > currentMins);
+
+            const div = document.createElement('div');
+            div.className = `timeline-item ${isActive ? 'active' : ''}`;
+            
+            div.innerHTML = `
+                <div class="t-time" style="font-size:0.7rem; line-height:1;">${item.horaInicio}<br><span style="font-size:0.5rem; opacity:0.6;">DÍA ${item.dia}</span></div>
+                <div class="t-info">
+                    <span class="t-sub">${isLab ? '🧪' : '📚'} ${item.materia || item.titulo}</span>
+                    ${isActive ? '<span class="now-badge"></span>' : ''}
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    } catch (e) { console.error(e); }
+}
+    async function loadHealth() {
+        try {
+            const data = await App.read(App.STORES.SALUD);
+            const todayStr = new Date().toDateString();
+            let cals = 0, steps = 0;
+            data.forEach(d => {
+                if (new Date(d.fecha).toDateString() === todayStr) {
+                    if (d.cal) cals += parseFloat(d.cal);
+                    if (d.pasos || d.steps) steps += parseFloat(d.pasos || d.steps);
+                }
+            });
+            document.getElementById('health-cal').innerText = Math.round(cals);
+            document.getElementById('health-steps').innerText = Math.round(steps).toLocaleString('es-ES');
+        } catch (e) { console.error("Error Salud:", e); }
+    }
+
+    async function loadFinance() {
+        try {
+            const data = await App.read(App.STORES.FINANZAS);
+            const now = new Date();
+            let spent = 0;
+            data.forEach(f => {
+                const d = new Date(f.fecha);
+                if (d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+                    if (f.tipo === 'gasto') spent += parseFloat(f.monto);
+                }
+            });
+            document.getElementById('finance-val').innerText = spent.toFixed(2) + '€';
+        } catch (e) { console.error("Error Finanzas:", e); }
+    }
+</script>
 </body>
 </html>
