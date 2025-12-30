@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+  <link rel="manifest" href="./manifest.json">
+
   <meta charset="UTF-8" />
   <title>Instalar Agenda</title>
 
@@ -165,5 +167,11 @@
       installBtn.textContent = "Ya instalada";
     });
   </script>
+  <script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js");
+}
+</script>
+
 </body>
 </html>

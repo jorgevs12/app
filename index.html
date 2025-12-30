@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <link rel="manifest" href="./manifest.json">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Dashboard Pro</title>
@@ -85,7 +87,6 @@
     </style>
 </head>
 <body>
-    <link rel="manifest" href="manifest.json">
 
     <div class="container">
         
@@ -406,5 +407,11 @@ async function loadSchedule() {
         } catch (e) { console.error("Error Finanzas:", e); }
     }
 </script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js");
+}
+</script>
+
 </body>
 </html>
