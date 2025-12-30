@@ -18,18 +18,18 @@ const CRITICAL_CACHE = [
 // Archivos de tu app Agenda
 const INITIAL_CACHE = [
   './',
-  'agenda.html',
-  'ajustes.html',
-  'finanzas.html',
-  'generador.html',
-  'horario.html',
-  'notas.html',
-  'proyectos.html',
-  'salud.html',
-  'task.html',
-  'style.css',
-  'db.js',
-  'installer.html'
+  './agenda.html',
+  './ajustes.html',
+  './finanzas.html',
+  './generador.html',
+  './horario.html',
+  './notas.html',
+  './proyectos.html',
+  './salud.html',
+  './task.html',
+  './style.css',
+  './db.js',
+  './installer.html'
 ];
 
 // ========================================
