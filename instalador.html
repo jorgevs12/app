@@ -1,175 +1,202 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <link rel="manifest" href="./manifest.json">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="./manifest.json">
+<title>Agenda – Instalador Offline</title>
 
-  <meta charset="UTF-8" />
-  <title>Instalar Agenda</title>
-
-  <!-- Manifest -->
-  <link rel="manifest" href="manifest.json" />
-
-  <!-- Tema / color barra -->
-  <meta name="theme-color" content="#000000" />
-
-  <!-- Modo responsive -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <style>
+<style>
     body {
-      margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #060608;
-      color: #f5f5f5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+        background: #000;
+        color: #fff;
+        font-family: system-ui, sans-serif;
+        padding: 20px;
+        text-align: center;
     }
-
-    .card {
-      background: rgba(20, 20, 28, 0.95);
-      border-radius: 18px;
-      padding: 24px 20px;
-      max-width: 420px;
-      width: 90%;
-      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+    .box {
+        background: #111;
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 20px;
+        margin: 20px auto;
+        max-width: 500px;
+        text-align: left;
+        font-family: monospace;
     }
-
-    h1 {
-      margin: 0 0 8px;
-      font-size: 1.4rem;
+    .status-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 0;
     }
-
-    p {
-      margin: 4px 0;
-      font-size: 0.9rem;
-      color: #b7b7c9;
+    .btn {
+        width: 100%;
+        padding: 14px;
+        margin-top: 12px;
+        border-radius: 10px;
+        border: none;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        background: #2196F3;
+        color: #fff;
     }
-
-    .status {
-      margin-top: 10px;
-      font-size: 0.8rem;
-      color: #8f8fff;
+    .btn-secondary {
+        background: #333;
     }
-
-    button {
-      margin-top: 18px;
-      width: 100%;
-      padding: 10px 14px;
-      border-radius: 999px;
-      border: none;
-      font-size: 0.95rem;
-      font-weight: 500;
-      cursor: pointer;
-      background: linear-gradient(135deg, #4c6fff, #8f5bff);
-      color: #fff;
-      box-shadow: 0 10px 25px rgba(76, 111, 255, 0.45);
-      transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+    .btn-install {
+        background: #4CAF50;
     }
-
-    button:disabled {
-      opacity: 0.4;
-      cursor: default;
-      box-shadow: none;
-    }
-
-    button:not(:disabled):active {
-      transform: translateY(1px);
-      box-shadow: 0 6px 16px rgba(76, 111, 255, 0.35);
-    }
-
-    .small {
-      margin-top: 14px;
-      font-size: 0.75rem;
-      opacity: 0.7;
-    }
-
-    code {
-      font-family: "JetBrains Mono", "Fira Code", monospace;
-      font-size: 0.8rem;
-    }
-  </style>
+</style>
 </head>
+
 <body>
-  <div class="card">
-    <h1>Instalar Agenda</h1>
-    <p>Instala tu app <strong>Agenda</strong> como aplicación en Android, 100% offline.</p>
-    <p>Pulsa el botón cuando esté disponible.</p>
 
-    <button id="installBtn" disabled>Comprobando instalador…</button>
+<h1>📅 Agenda – Instalador Offline</h1>
+<p>Comprueba, instala y cachea todos los archivos de la app.</p>
 
-    <div class="status" id="status"></div>
+<div class="box">
+    <div class="status-item">
+        <span id="sw-icon">⏳</span>
+        <span id="sw-text">Service Worker: comprobando…</span>
+    </div>
 
-    <p class="small">
-      Asegúrate de abrir este archivo desde <code>https://</code> (o <code>localhost</code>) en Chrome/Edge para Android.
-    </p>
-  </div>
+    <div class="status-item">
+        <span id="cache-icon">⏳</span>
+        <span id="cache-text">Caché: comprobando…</span>
+    </div>
 
-  <script>
-    const statusEl = document.getElementById("status");
-    const installBtn = document.getElementById("installBtn");
+    <div class="status-item">
+        <span id="files-icon">⏳</span>
+        <span id="files-text">Archivos: verificando…</span>
+    </div>
+</div>
 
-    let deferredPrompt = null;
+<button class="btn" onclick="forceCacheAll()">📦 Cachear todos los archivos</button>
 
-    // 1) Registrar service worker para cachear TODO
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js")
-        .then(() => {
-          statusEl.textContent = "Service Worker registrado. Preparando instalación…";
-        })
-        .catch(err => {
-          console.error("Error registrando Service Worker:", err);
-          statusEl.textContent = "Error registrando el Service Worker.";
-        });
-    } else {
-      statusEl.textContent = "Este navegador no soporta Service Workers.";
+<!-- ⭐ NUEVO BOTÓN DE INSTALAR ⭐ -->
+<button class="btn btn-install" id="installBtn" style="">
+    📱 Instalar Agenda
+</button>
+
+<button class="btn btn-secondary" onclick="openApp()">➡️ Abrir Agenda</button>
+
+<script>
+/* Archivos reales de tu PWA Agenda */
+const FILES = [
+    "./index.html",
+    "./agenda.html",
+    "./ajustes.html",
+    "./finanzas.html",
+    "./generador.html",
+    "./horario.html",
+    "./notas.html",
+    "./proyectos.html",
+    "./salud.html",
+    "./task.html",
+    "./style.css",
+    "./db.js",
+    "./manifest.json",
+    "./sw.js",
+    "./icons/icon-192.png",
+    "./icons/icon-512.png"
+];
+
+function setStatus(id, icon, text) {
+    document.getElementById(id + "-icon").textContent = icon;
+    document.getElementById(id + "-text").textContent = text;
+}
+
+/* 1) Registrar Service Worker */
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js")
+        .then(() => setStatus("sw", "✅", "Service Worker activo"))
+        .catch(() => setStatus("sw", "❌", "Error registrando SW"));
+} else {
+    setStatus("sw", "❌", "Navegador sin soporte SW");
+}
+
+/* 2) Verificar caché existente */
+async function checkCache() {
+    if (!("caches" in window)) {
+        setStatus("cache", "❌", "Caché no soportada");
+        return;
     }
 
-    // 2) Escuchar el evento beforeinstallprompt (PWA instalable)
-    window.addEventListener("beforeinstallprompt", (event) => {
-      event.preventDefault();
-      deferredPrompt = event;
-      installBtn.disabled = false;
-      installBtn.textContent = "Instalar Agenda";
-      statusEl.textContent = "La app es instalable. Pulsa el botón para instalar.";
-    });
-
-    // 3) Botón de instalar → lanza el prompt del sistema
-    installBtn.addEventListener("click", async () => {
-      if (!deferredPrompt) {
-        statusEl.textContent = "Aún no hay prompt de instalación disponible.";
+    const keys = await caches.keys();
+    if (keys.length === 0) {
+        setStatus("cache", "⚠️", "Caché vacía");
         return;
-      }
+    }
 
-      installBtn.disabled = true;
-      installBtn.textContent = "Abriendo instalador…";
+    setStatus("cache", "✅", "Caché detectada");
+}
+checkCache();
 
-      const choice = await deferredPrompt.prompt();
-      const result = await deferredPrompt.userChoice;
+/* 3) Verificar si TODOS los archivos están en caché */
+async function verifyFiles() {
+    const keys = await caches.keys();
+    if (keys.length === 0) {
+        setStatus("files", "⚠️", "No hay caché aún");
+        return;
+    }
 
-      if (result.outcome === "accepted") {
-        statusEl.textContent = "Instalación aceptada. Busca 'Agenda' en tu launcher.";
-      } else {
-        statusEl.textContent = "Instalación cancelada por el usuario.";
-        installBtn.disabled = false;
-        installBtn.textContent = "Intentar instalar de nuevo";
-      }
+    const cache = await caches.open(keys[0]);
+    let missing = [];
 
-      deferredPrompt = null;
-    });
+    for (const file of FILES) {
+        const match = await cache.match(file);
+        if (!match) missing.push(file);
+    }
 
-    // 4) Detectar cuando la app ya está instalada
-    window.addEventListener("appinstalled", () => {
-      statusEl.textContent = "Agenda ya está instalada en este dispositivo.";
-      installBtn.disabled = true;
-      installBtn.textContent = "Ya instalada";
-    });
-  </script>
-  <script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("./sw.js");
+    if (missing.length === 0) {
+        setStatus("files", "✅", "Todos los archivos están en caché");
+    } else {
+        setStatus("files", "❌", "Faltan archivos: " + missing.join(", "));
+    }
+}
+verifyFiles();
+
+/* 4) Forzar cacheo de TODOS los archivos */
+async function forceCacheAll() {
+    setStatus("files", "⏳", "Cacheando archivos…");
+
+    const cache = await caches.open("agenda-cache-v1");
+
+    for (const file of FILES) {
+        try {
+            const res = await fetch(file, { cache: "reload" });
+            await cache.put(file, res.clone());
+        } catch (e) {
+            console.warn("No se pudo cachear:", file);
+        }
+    }
+
+    setStatus("files", "✅", "Todos los archivos cacheados");
+}
+
+/* ⭐ 5) BOTÓN DE INSTALAR ⭐ */
+let deferredPrompt = null;
+
+window.addEventListener("beforeinstallprompt", e => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    const btn = document.getElementById("installBtn");
+    btn.style.display = "block";
+
+    btn.onclick = async () => {
+        btn.disabled = true;
+        await deferredPrompt.prompt();
+        deferredPrompt = null;
+    };
+});
+
+/* 6) Abrir la app */
+function openApp() {
+    location.href = "./index.html";
 }
 </script>
 
