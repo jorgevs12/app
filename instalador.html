@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Agenda">
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="manifest.json">
     <title>Agenda - Instalador</title>
 
     <style>
@@ -93,7 +93,7 @@
    1. REGISTRO DEL SERVICE WORKER
    ============================ */
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
+    navigator.serviceWorker.register('sw.js')
         .then(() => updateStatus('sw-icon', 'sw-text', '✅', 'Service Worker listo'))
         .catch(() => updateStatus('sw-icon', 'sw-text', '❌', 'Error en Service Worker'));
 }
@@ -101,7 +101,7 @@ if ('serviceWorker' in navigator) {
 /* ============================
    2. VERIFICAR MANIFEST
    ============================ */
-fetch('./manifest.json')
+fetch('manifest.json')
     .then(r => r.json())
     .then(() => updateStatus('manifest-icon', 'manifest-text', '✅', 'Manifest válido'))
     .catch(() => updateStatus('manifest-icon', 'manifest-text', '❌', 'Error en manifest'));
@@ -150,7 +150,7 @@ function installApp() {
    6. ABRIR APP
    ============================ */
 function redirectToApp() {
-    location.href = './index.html';
+    location.href = 'index.html';
 }
 </script>
 

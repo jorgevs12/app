@@ -9,27 +9,27 @@ const INDEX_CACHE = 'agenda-index-cache';
 
 // Archivos CRÍTICOS (siempre disponibles)
 const CRITICAL_CACHE = [
-  './index.html',
-  './manifest.json',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  'index.html',
+  'manifest.json',
+  'icon-192.png',
+  'icon-512.png'
 ];
 
 // Archivos de tu app Agenda
 const INITIAL_CACHE = [
   './',
-  './agenda.html',
-  './ajustes.html',
-  './finanzas.html',
-  './generador.html',
-  './horario.html',
-  './notas.html',
-  './proyectos.html',
-  './salud.html',
-  './task.html',
-  './style.css',
-  './db.js',
-  './installer.html'
+  'agenda.html',
+  'ajustes.html',
+  'finanzas.html',
+  'generador.html',
+  'horario.html',
+  'notas.html',
+  'proyectos.html',
+  'salud.html',
+  'task.html',
+  'style.css',
+  'db.js',
+  'installer.html'
 ];
 
 // ========================================
@@ -110,9 +110,9 @@ self.addEventListener('fetch', event => {
   // 1) index.html → CACHE FIRST
   if (url.pathname.endsWith('index.html') || url.pathname === '/' || url.pathname === '/agenda/') {
     event.respondWith(
-      caches.match('./index.html', { cacheName: INDEX_CACHE })
+      caches.match('index.html', { cacheName: INDEX_CACHE })
         .then(cached => cached || fetch(req))
-        .catch(() => caches.match('./index.html'))
+        .catch(() => caches.match('index.html'))
     );
     return;
   }

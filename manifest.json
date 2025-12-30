@@ -1,20 +1,20 @@
 {
   "name": "Agenda",
   "short_name": "Agenda",
-  "start_url": "/index.html",
-  "scope": "/",
+  "start_url": "index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
 
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
@@ -25,10 +25,10 @@
       "name": "Finanzas",
       "short_name": "Finanzas",
       "description": "Abrir el módulo de finanzas",
-      "url": "/finanzas.html",
+      "url": "finanzas.html",
       "icons": [
         {
-          "src": "/icons/finanzas.png",
+          "src": "finanzas.png",
           "sizes": "96x96"
         }
       ]
@@ -37,10 +37,10 @@
       "name": "Notas",
       "short_name": "Notas",
       "description": "Ir al módulo de notas",
-      "url": "/notas.html",
+      "url": "notas.html",
       "icons": [
         {
-          "src": "/icons/notas.png",
+          "src": "notas.png",
           "sizes": "96x96"
         }
       ]
@@ -49,10 +49,10 @@
       "name": "Proyecto",
       "short_name": "Proyecto",
       "description": "Abrir el módulo de proyectos",
-      "url": "/proyecto.html",
+      "url": "proyecto.html",
       "icons": [
         {
-          "src": "/icons/proyecto.png",
+          "src": "proyecto.png",
           "sizes": "96x96"
         }
       ]
@@ -61,10 +61,10 @@
       "name": "Salud",
       "short_name": "Salud",
       "description": "Ir al módulo de salud",
-      "url": "/salud.html",
+      "url": "salud.html",
       "icons": [
         {
-          "src": "/icons/salud.png",
+          "src": "salud.png",
           "sizes": "96x96"
         }
       ]
