@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>NutriTrack - Registro de Comidas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="stylesheet" href="style.css">
+    <script src="db.js"></script>
+    
+    <style>
+        /* =========================================
+           ADAPTACIÓN AL TEMA DASHBOARD PRO (style.css)
+           ========================================= */
+        :root {
+            /* Mapeo de variables antiguas a las nuevas de style.css */
+            --primary: var(--accent-blue);
+            --success: var(--accent-green);
+            --danger: var(--accent-red);
+            --warning: var(--accent-orange);
+            --bg: var(--bg-body);       /* Fondo oscuro */
+            --card: var(--card-glass);  /* Cristal */
+            --text: var(--text-primary);
+            --border: var(--card-border);
+            
+            /* Colores específicos */
+            --red: var(--accent-red);
+            --green: var(--accent-green);
+            --yellow: var(--accent-orange);
+        }
+
+        body {
+            font-family: var(--font-body, 'Roboto', sans-serif);
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px 12px;
+            line-height: 1.6;
+            min-height: 100vh;
+            /* Scrollbar oscura */
+            scrollbar-color: var(--accent-blue) var(--bg-body);
+        }
+
+        h1, h2 {
+            color: var(--text-primary);
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        h1 {
+            /* Efecto gradiente en el título principal como en agenda.html */
+            background: linear-gradient(180deg, #fff 20%, #ccc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.05em;
+            margin-top: 0;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding-bottom: 80px;
+        }
+
+        /* Tarjetas con efecto cristal */
+        .card {
+            background: var(--card); /* Usa --card-glass */
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(var(--blur-strength));
+        }
+
+        /* Inputs y Selects estilo Dark */
+        input, select, button {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border-radius: 12px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        input, select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Botones modernizados */
+        button {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--primary);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+        }
+
+        button:hover { 
+            background: var(--primary); 
+            color: white; 
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        button.success { 
+            color: var(--success);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        button.success:hover { background: var(--success); color: #000; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+
+        button.danger { 
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        button.danger:hover { background: var(--danger); color: white; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+
+        .radio-group {
+            display: flex;
+            background: rgba(255,255,255,0.05);
+            padding: 5px;
+            border-radius: 14px;
+            margin-bottom: 20px;
+            position: relative;
+            border: 1px solid var(--border);
+        }
+        
+        .radio-group label {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            z-index: 2;
+            cursor: pointer;
+            transition: color 0.3s;
+            color: var(--text-muted);
+            border-radius: 10px;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Ocultar el radio nativo pero mantener funcionalidad */
+        .radio-group input[type="radio"] {
+            display: none;
+        }
+
+        /* Estilo cuando está seleccionado (usando CSS directo en el label) */
+        .radio-group label:has(input:checked) {
+            background: var(--card);
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-weight: 700;
+        }
+
+
+
+        input[type="radio"] {
+            width: auto;
+            margin: 0;
+            accent-color: var(--primary);
+        }
+
+        /* Barras de progreso neón */
+        progress {
+            height: 12px;
+            width: 100%;
+            border-radius: 6px;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        progress::-webkit-progress-bar { background: rgba(255,255,255,0.1); }
+        progress::-webkit-progress-value { transition: width 0.3s ease; }
+        
+        progress.low::-webkit-progress-value { background: var(--red); box-shadow: 0 0 10px var(--red); }
+        progress.good::-webkit-progress-value { background: var(--green); box-shadow: 0 0 10px var(--green); }
+        progress.high::-webkit-progress-value { background: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+
+        .meal-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+        .meal-item:last-child { margin-bottom: 0; border-bottom: none; }
+        .meal-item span { font-size: 1rem; color: var(--text-secondary); }
+        .meal-item button { align-self: flex-end; width: auto; padding: 6px 16px; margin: 0; font-size: 0.8em; }
+
+        #listaResultados > div {
+            padding: 14px; 
+            background: rgba(255,255,255,0.05); 
+            margin: 8px 0; 
+            border-radius: 12px; 
+            cursor: pointer;
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        #listaResultados > div:hover {
+            border-color: var(--primary);
+            color: white;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        img { max-width: 100%; border-radius: 12px; border: 1px solid var(--border); margin-top: 10px; }
+
+        /* Tabs estilo Agenda */
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            gap: 10px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-radius: 12px 12px 0 0;
+            margin: 0;
+        }
+        .tab-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+        .tab-btn.active {
+            border-bottom: 2px solid var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+            background: linear-gradient(180deg, rgba(59,130,246,0.1) 0%, rgba(0,0,0,0) 100%);
+        }
+
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .date-inputs {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .date-inputs input { flex: 1; min-width: 150px; }
+
+        /* Ajustes para Chart.js en fondo oscuro */
+        canvas { 
+            max-width: 100%; 
+            margin-top: 20px; 
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 10px;
+        }
+        .list-item.active {
+    background: rgba(59, 130, 246, 0.15); /* Fondo azulado sutil */
+    border-color: var(--primary);          /* Borde azul neón */
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.15); /* Resplandor */
+}
+
+/* Hacer que el icono del elemento activo brille */
+.list-item.active i {
+    color: white;
+    filter: drop-shadow(0 0 5px var(--primary));
+}
+
+        /* Tabla de info nutricional */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; color: var(--text-secondary); }
+        td { padding: 8px 0; border-bottom: 1px solid var(--border); }
+        tr:last-child td { border: none; }
+
+        @media (min-width: 600px) {
+            .radio-group { flex-direction: row; justify-content: center; }
+            .meal-item { flex-direction: row; justify-content: space-between; align-items: center; }
+            .meal-item button { width: auto; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header style="margin-bottom: 20px; display:flex; align-items:center;">
+            <a href="index.html" style="color:var(--text); display:flex; align-items:center; justify-content:center; width:44px; height:44px; background:rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius:14px; text-decoration:none; margin-right: 15px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </a>
+            <div>
+                <h1 style="font-size:1.8rem; font-weight:800; margin:0; text-align: left;">Comida</h1>
+            </div>
+        </header>
+
+        <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="diario">Diario</button>
+            <button class="tab-btn" data-tab="semanal">Semanal</button>
+            <button class="tab-btn" data-tab="historial">Historial</button>
+        </div>
+
+        <div id="diario" class="tab-content active">
+            <div class="card">
+                <h2><i class="fas fa-search" style="margin-right:8px; color:var(--primary);"></i> Buscar producto</h2>
+                
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="modo" value="codigo" checked> 
+                        <i class="fas fa-barcode"></i> Código
+                    </label>
+                    <label>
+                        <input type="radio" name="modo" value="nombre"> 
+                        <i class="fas fa-font"></i> Nombre
+                    </label>
+                </div>
+
+                <div id="busquedaCodigo">
+                    <div class="search-group">
+                        <input type="text" id="inputCodigo" class="grouped" placeholder="Escanear o escribir código..." inputmode="numeric">
+                        <button id="btnBuscarCodigo" class="search-btn">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="busquedaNombre" style="display:none;">
+                    <div class="search-group">
+                        <input type="text" id="inputNombre" class="grouped" placeholder="Ej: Manzana, Leche...">
+                        <button id="btnBuscarNombre" class="search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <p id="estadoBusqueda" style="text-align:center; color: var(--text-muted); margin-top:15px; font-size:0.9rem; min-height:20px;"></p>
+                <div id="listaResultados"></div>
+            </div>
+
+            <div class="card" id="productoCard" style="display:none;">
+                <h2>Producto seleccionado</h2>
+                <div id="producto"></div>
+            </div>
+
+            <div class="card">
+                <h2>Registrar comida</h2>
+                <input type="text" id="cantidad" placeholder="Cantidad (g/ml)" inputmode="decimal">
+                <select id="tipoComida">
+                    <option value="desayuno">Desayuno</option>
+                    <option value="media-mañana">Media mañana</option>
+                    <option value="comida">Comida</option>
+                    <option value="merienda">Merienda</option>
+                    <option value="cena">Cena</option>
+                </select>
+                <button id="btnGuardarComida" class="success">Guardar comida</button>
+                <p id="estadoComida" style="text-align:center; margin-top:10px; color: var(--accent-blue);"></p>
+            </div>
+
+            <div class="card">
+                <h2>Progreso nutricional de hoy</h2>
+                <div id="progresoDiario"></div>
+            </div>
+
+            <div class="card">
+                <h2>Comidas registradas hoy</h2>
+                <div id="listaComidas"></div>
+            </div>
+        </div>
+
+        <div id="semanal" class="tab-content">
+            <div class="card">
+                <h2>Progreso nutricional semanal</h2>
+                <div id="progresoSemanal"></div>
+            </div>
+        </div>
+
+        <div id="historial" class="tab-content">
+            <div class="card">
+                <h2>Historial nutricional</h2>
+                <div class="date-inputs">
+                    <input type="date" id="fechaDesde">
+                    <input type="date" id="fechaHasta">
+                </div>
+                <button id="cargarHistorial">Cargar historial</button>
+                <canvas id="chartHistorial"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // IndexedDB
+        let db;
+        const DB_NAME = "comidasDB";
+        const STORE_MEALS = "comidas";
+
+        function abrirDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, 2);
+                req.onupgradeneeded = e => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_MEALS)) {
+                        db.createObjectStore(STORE_MEALS, { keyPath: "id", autoIncrement: true });
+                    }
+                };
+                req.onsuccess = e => { db = e.target.result; resolve(); };
+                req.onerror = e => reject(e.target.error);
+            });
+        }
+
+        function guardarComida(comida) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction([STORE_MEALS], "readwrite");
+                tx.objectStore(STORE_MEALS).add(comida);
+                tx.oncomplete = () => resolve();
+                tx.onerror = e => reject(e.target.error);
+            });
+        }
+
+        function borrarComida(id) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction([STORE_MEALS], "readwrite");
+                tx.objectStore(STORE_MEALS).delete(id);
+                tx.oncomplete = () => resolve();
+                tx.onerror = e => reject(e.target.error);
+            });
+        }
+
+        async function obtenerTodasComidas() {
+            const tx = db.transaction([STORE_MEALS], "readonly");
+            const store = tx.objectStore(STORE_MEALS);
+            const req = store.getAll();
+            return new Promise(resolve => req.onsuccess = () => resolve(req.result));
+        }
+
+        async function obtenerComidasHoy() {
+            const hoy = new Date().toISOString().slice(0, 10);
+            const todas = await obtenerTodasComidas();
+            return todas.filter(c => c.fecha === hoy);
+        }
+
+        async function obtenerComidasSemana() {
+            const hoy = new Date();
+            const semanaPasada = new Date(hoy);
+            semanaPasada.setDate(hoy.getDate() - 6);
+            const desde = semanaPasada.toISOString().slice(0, 10);
+            const hasta = hoy.toISOString().slice(0, 10);
+            const todas = await obtenerTodasComidas();
+            return todas.filter(c => c.fecha >= desde && c.fecha <= hasta);
+        }
+
+        async function obtenerComidasRango(desde, hasta) {
+            const todas = await obtenerTodasComidas();
+            return todas.filter(c => c.fecha >= desde && c.fecha <= hasta);
+        }
+
+        // Open Food Facts
+        async function buscarPorCodigo(codigo) {
+            const url = `https://es.openfoodfacts.org/api/v0/product/${codigo}.json`;
+            const res = await fetch(url);
+            const data = await res.json();
+            if (data.status !== 1) throw new Error("No encontrado");
+            return data.product;
+        }
+
+        async function buscarPorNombre(nombre) {
+            const url = `https://es.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(nombre)}&search_simple=1&action=process&json=1&page_size=15`;
+            const res = await fetch(url);
+            const data = await res.json();
+            return data.products || [];
+        }
+
+        // Metas diarias y semanales (igual que antes)
+        const metasDiarias = {
+            kcal: 2000, prote: 50, grasa: 70, grasaSat: 20, carb: 260, azucar: 50, fibra: 30, sal: 5,
+            vitc: 90, calcio: 1000, hierro: 18
+        };
+        const metasSemanales = Object.fromEntries(Object.entries(metasDiarias).map(([k, v]) => [k, v * 7]));
+
+        // UI
+        let productoSeleccionado = null;
+        let chart = null;
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab).classList.add('active');
+                if (btn.dataset.tab === 'diario') {
+                    cargarComidasHoy();
+                } else if (btn.dataset.tab === 'semanal') {
+                    cargarProgresoSemanal();
+                } else if (btn.dataset.tab === 'historial') {
+                    const hoy = new Date();
+                    const mesAtras = new Date(hoy);
+                    mesAtras.setDate(hoy.getDate() - 30);
+                    document.getElementById('fechaDesde').value = mesAtras.toISOString().slice(0, 10);
+                    document.getElementById('fechaHasta').value = hoy.toISOString().slice(0, 10);
+                }
+            });
+        });
+
+        // Modo búsqueda (sin escáner)
+        document.querySelectorAll("input[name='modo']").forEach(r => {
+            r.addEventListener("change", () => {
+                const modo = document.querySelector("input[name='modo']:checked").value;
+                document.getElementById("busquedaCodigo").style.display = modo === "codigo" ? "block" : "none";
+                document.getElementById("busquedaNombre").style.display = modo === "nombre" ? "block" : "none";
+            });
+        });
+
+        // Búsqueda por código y nombre (igual)
+        document.getElementById("btnBuscarCodigo").onclick = async () => {
+            const codigo = document.getElementById("inputCodigo").value.trim();
+            if (!codigo) return;
+            document.getElementById("estadoBusqueda").textContent = "Buscando...";
+            try {
+                const p = await buscarPorCodigo(codigo);
+                productoSeleccionado = p;
+                mostrarProducto(p);
+                document.getElementById("productoCard").style.display = "block";
+                document.getElementById("estadoBusqueda").textContent = "Producto encontrado";
+            } catch {
+                document.getElementById("estadoBusqueda").textContent = "Producto no encontrado";
+            }
+        };
+
+        document.getElementById("btnBuscarNombre").onclick = async () => {
+            const nombre = document.getElementById("inputNombre").value.trim();
+            if (!nombre) return;
+            document.getElementById("estadoBusqueda").textContent = "Buscando...";
+            try {
+                const lista = await buscarPorNombre(nombre);
+                mostrarResultados(lista);
+                document.getElementById("estadoBusqueda").textContent = lista.length + " resultados";
+            } catch {
+                document.getElementById("estadoBusqueda").textContent = "Error";
+            }
+        };
+
+        function mostrarResultados(lista) {
+    const cont = document.getElementById("listaResultados");
+    cont.innerHTML = "";
+    
+    lista.forEach(p => {
+        const div = document.createElement("div");
+        // IMPORTANTE: Asignar la clase para que tenga el estilo de tarjeta oscura
+        div.className = "list-item"; 
+        
+        // IMPORTANTE: Usar innerHTML para mantener la estructura bonita (Nombre, Marca, Flecha)
+        div.innerHTML = `
+            <div style="flex:1;">
+                <div style="font-weight:bold; color:white;">${p.product_name || "Sin nombre"}</div>
+                <div style="font-size:0.8rem; color:var(--text-muted);">${p.brands || "Sin marca"}</div>
+            </div>
+            <i class="fas fa-chevron-right" style="color:var(--primary); transition: all 0.3s;"></i>
+        `;
+        
+        div.onclick = async () => {
+            // 1. Quitar 'active' de todos los elementos de la lista
+            document.querySelectorAll('.list-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 2. Añadir 'active' SOLO al que acabamos de tocar
+            div.classList.add('active');
+            
+            // 3. Mostrar estado de carga
+            document.getElementById("estadoBusqueda").innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cargando detalles...';
+            
+            try {
+                const full = await buscarPorCodigo(p.code);
+                productoSeleccionado = full;
+                mostrarProducto(full);
+                document.getElementById("productoCard").style.display = "block";
+                
+                // Limpiar mensaje de carga y hacer scroll suave hacia el producto
+                document.getElementById("estadoBusqueda").textContent = "";
+                document.getElementById("productoCard").scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                document.getElementById("estadoBusqueda").textContent = "Error al cargar detalles.";
+            }
+        };
+        cont.appendChild(div);
+    });
+}
+
+
+        function mostrarProducto(p) {
+            const cont = document.getElementById("producto");
+            cont.innerHTML = "";
+            if (p.image_front_url) {
+                const img = document.createElement("img");
+                img.src = p.image_front_url;
+                img.alt = p.product_name;
+                cont.appendChild(img);
+            }
+            cont.innerHTML += `<p><strong>${p.product_name || "Desconocido"}</strong> - ${p.brands || "Sin marca"}</p>`;
+            const nutri = p.nutriments || {};
+            const tabla = document.createElement("table");
+            const nutrientes = [
+                ["Energía (kcal)", nutri["energy-kcal_100g"]],
+                ["Proteínas (g)", nutri["proteins_100g"]],
+                ["Grasas (g)", nutri["fat_100g"]],
+                ["Grasas saturadas (g)", nutri["saturated-fat_100g"]],
+                ["Carbohidratos (g)", nutri["carbohydrates_100g"]],
+                ["Azúcares (g)", nutri["sugars_100g"]],
+                ["Fibra (g)", nutri["fiber_100g"]],
+                ["Sal (g)", nutri["salt_100g"]],
+                ["Vitamina C (mg)", nutri["vitamin-c_100g"]],
+                ["Calcio (mg)", nutri["calcium_100g"]],
+                ["Hierro (mg)", nutri["iron_100g"]]
+            ];
+            nutrientes.forEach(([label, val]) => {
+                if (val !== undefined) {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `<td>${label}</td><td style="text-align:right;">${val.toFixed(1)}</td>`;
+                    tabla.appendChild(tr);
+                }
+            });
+            cont.appendChild(tabla);
+        }
+
+        // Registrar comida, progreso diario y semanal (igual que antes)
+        document.getElementById("btnGuardarComida").onclick = async () => {
+            if (!productoSeleccionado) {
+                document.getElementById("estadoComida").textContent = "Selecciona un producto";
+                return;
+            }
+            const cantidadStr = document.getElementById("cantidad").value.trim().replace(',', '.');
+            const cantidad = Number(cantidadStr);
+            if (isNaN(cantidad) || cantidad <= 0) {
+                document.getElementById("estadoComida").textContent = "Cantidad inválida";
+                return;
+            }
+            const tipo = document.getElementById("tipoComida").value;
+            const hoy = new Date().toISOString().slice(0, 10);
+            const nutri = productoSeleccionado.nutriments || {};
+            const factor = cantidad / 100;
+            const comida = {
+                fecha: hoy,
+                tipo,
+                cantidad,
+                nombre: productoSeleccionado.product_name || "Producto",
+                kcal: (nutri["energy-kcal_100g"] ?? 0) * factor,
+                prote: (nutri["proteins_100g"] ?? 0) * factor,
+                grasa: (nutri["fat_100g"] ?? 0) * factor,
+                grasaSat: (nutri["saturated-fat_100g"] ?? 0) * factor,
+                carb: (nutri["carbohydrates_100g"] ?? 0) * factor,
+                azucar: (nutri["sugars_100g"] ?? 0) * factor,
+                fibra: (nutri["fiber_100g"] ?? 0) * factor,
+                sal: (nutri["salt_100g"] ?? 0) * factor,
+                vitc: (nutri["vitamin-c_100g"] ?? 0) * factor,
+                calcio: (nutri["calcium_100g"] ?? 0) * factor,
+                hierro: (nutri["iron_100g"] ?? 0) * factor
+            };
+            await guardarComida(comida);
+            document.getElementById("estadoComida").textContent = "¡Comida guardada!";
+            document.getElementById("cantidad").value = "";
+            cargarComidasHoy();
+        };
+
+        async function cargarComidasHoy() {
+            const comidas = await obtenerComidasHoy();
+            const lista = document.getElementById("listaComidas");
+            lista.innerHTML = "";
+            let tot = {kcal:0, prote:0, grasa:0, grasaSat:0, carb:0, azucar:0, fibra:0, sal:0, vitc:0, calcio:0, hierro:0};
+            comidas.forEach(c => {
+                Object.keys(tot).forEach(k => tot[k] += c[k] || 0);
+                const div = document.createElement("div");
+                div.className = "meal-item";
+                div.innerHTML = `<span>${c.tipo.charAt(0).toUpperCase() + c.tipo.slice(1)}: ${c.nombre} (${c.cantidad}g) - ${Math.round(c.kcal)} kcal</span>`;
+                const btn = document.createElement("button");
+                btn.textContent = "Borrar";
+                btn.className = "danger";
+                btn.onclick = async () => {
+                    if (confirm("¿Borrar esta comida?")) {
+                        await borrarComida(c.id);
+                        cargarComidasHoy();
+                    }
+                };
+                div.appendChild(btn);
+                lista.appendChild(div);
+            });
+
+            const progreso = document.getElementById("progresoDiario");
+            progreso.innerHTML = "";
+            const labels = {
+                kcal: "Calorías (kcal)", prote: "Proteínas (g)", grasa: "Grasas (g)", grasaSat: "Grasas saturadas (g)",
+                carb: "Carbohidratos (g)", azucar: "Azúcares (g)", fibra: "Fibra (g)", sal: "Sal (g)",
+                vitc: "Vitamina C (mg)", calcio: "Calcio (mg)", hierro: "Hierro (mg)"
+            };
+            Object.keys(metasDiarias).forEach(key => {
+                const value = tot[key];
+                const max = metasDiarias[key];
+                const p = document.createElement("p");
+                p.innerHTML = `<strong>${labels[key]}:</strong> ${value.toFixed(1)} / ${max}`;
+                const bar = document.createElement("progress");
+                bar.max = max;
+                bar.value = Math.min(value, max);
+                let status = 'good';
+                if (value < max * 0.9) status = 'low';
+                else if (value > max * 1.1) status = 'high';
+                bar.classList.add(status);
+                p.style.color = status === 'low' ? 'var(--red)' : status === 'good' ? 'var(--green)' : 'var(--yellow)';
+                progreso.appendChild(p);
+                progreso.appendChild(bar);
+            });
+        }
+
+        async function cargarProgresoSemanal() {
+            const comidas = await obtenerComidasSemana();
+            let tot = {kcal:0, prote:0, grasa:0, grasaSat:0, carb:0, azucar:0, fibra:0, sal:0, vitc:0, calcio:0, hierro:0};
+            comidas.forEach(c => Object.keys(tot).forEach(k => tot[k] += c[k] || 0));
+            const progreso = document.getElementById("progresoSemanal");
+            progreso.innerHTML = "";
+            const labels = {
+                kcal: "Calorías (kcal)", prote: "Proteínas (g)", grasa: "Grasas (g)", grasaSat: "Grasas saturadas (g)",
+                carb: "Carbohidratos (g)", azucar: "Azúcares (g)", fibra: "Fibra (g)", sal: "Sal (g)",
+                vitc: "Vitamina C (mg)", calcio: "Calcio (mg)", hierro: "Hierro (mg)"
+            };
+            Object.keys(metasSemanales).forEach(key => {
+                const value = tot[key];
+                const max = metasSemanales[key];
+                const p = document.createElement("p");
+                p.innerHTML = `<strong>${labels[key]}:</strong> ${value.toFixed(1)} / ${max}`;
+                const bar = document.createElement("progress");
+                bar.max = max;
+                bar.value = Math.min(value, max);
+                let status = 'good';
+                if (value < max * 0.9) status = 'low';
+                else if (value > max * 1.1) status = 'high';
+                bar.classList.add(status);
+                p.style.color = status === 'low' ? 'var(--red)' : status === 'good' ? 'var(--green)' : 'var(--yellow)';
+                progreso.appendChild(p);
+                progreso.appendChild(bar);
+            });
+        }
+
+        // Historial - Gráfica de barras (solo por fechas)
+        document.getElementById("cargarHistorial").onclick = cargarHistorial;
+
+        async function cargarHistorial() {
+            const desde = document.getElementById("fechaDesde").value;
+            const hasta = document.getElementById("fechaHasta").value;
+            if (!desde || !hasta) {
+                alert("Selecciona ambas fechas");
+                return;
+            }
+
+            const comidas = await obtenerComidasRango(desde, hasta);
+            const datos = {};
+            comidas.forEach(c => {
+                if (!datos[c.fecha]) {
+                    datos[c.fecha] = {kcal: 0};
+                }
+                datos[c.fecha].kcal += c.kcal || 0;
+            });
+
+            const labels = Object.keys(datos).sort();
+            const kcalData = labels.map(d => Math.round(datos[d].kcal));
+
+            const ctx = document.getElementById('chartHistorial').getContext('2d');
+            if (chart) chart.destroy();
+            
+            // CONFIGURACIÓN ACTUALIZADA: Texto blanco para modo oscuro
+            Chart.defaults.color = '#fff';
+            Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Calorías diarias (kcal)',
+                        data: kcalData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)', // Azul acento
+                        borderColor: '#3b82f6',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'top', labels: { color: 'white' } },
+                        title: { display: true, text: 'Consumo de calorías por día', color: 'white' }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            title: { display: true, text: 'Calorías (kcal)', color: '#a1a1aa' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        x: { 
+                            title: { display: true, text: 'Fecha', color: '#a1a1aa' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Inicializar
+        abrirDB().then(() => {
+            cargarComidasHoy();
+
+            // Valores por defecto en historial (últimos 30 días)
+            const hoy = new Date();
+            const mesAtras = new Date(hoy);
+            mesAtras.setDate(hoy.getDate() - 30);
+            document.getElementById('fechaDesde').value = mesAtras.toISOString().slice(0, 10);
+            document.getElementById('fechaHasta').value = hoy.toISOString().slice(0, 10);
+        }).catch(err => {
+            console.error(err);
+            alert("Error al inicializar la base de datos");
+        });
+    </script>
+</body>
+</html>

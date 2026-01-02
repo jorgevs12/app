@@ -1,23 +1,16 @@
 // ========================================
-// SERVICE WORKER - AGENDA (100% OFFLINE)
-// Adaptado desde tu versión funcional
+// SERVICE WORKER - AGENDA (CORREGIDO)
 // ========================================
 
-const CACHE_VERSION = 'agenda-v1';
+const CACHE_VERSION = 'agenda-v2'; // Incrementé la versión para forzar actualización
 const CACHE_NAME = 'agenda-cache-' + CACHE_VERSION;
-const INDEX_CACHE = 'agenda-index-cache';
 
-// Archivos CRÍTICOS (siempre disponibles)
-const CRITICAL_CACHE = [
-  'index.html',
-  'manifest.json',
-  'icon-192.png',
-  'icon-512.png'
-];
-
-// Archivos de tu app Agenda
-const INITIAL_CACHE = [
+// Lista unificada de archivos. 
+// IMPORTANTE: Asegúrate de que estas rutas sean exactas.
+const APP_SHELL = [
   './',
+  './index.html',
+  './manifest.json',
   './agenda.html',
   './ajustes.html',
   './finanzas.html',
@@ -27,130 +20,95 @@ const INITIAL_CACHE = [
   './proyectos.html',
   './salud.html',
   './task.html',
+  './comida.html',
   './style.css',
   './db.js',
-  './installer.html'
+  './instalador.html',
+  './icon-192.png',
+  './icon-512.png' 
 ];
 
 // ========================================
-// INSTALL - Cachear todo inmediatamente
+// INSTALL - Asegurar que todo se guarde
 // ========================================
 self.addEventListener('install', event => {
-  console.log('📦 [SW] Instalando Agenda...');
+  console.log('📦 [SW] Instalando versión:', CACHE_VERSION);
+  self.skipWaiting(); // Forzar activación inmediata
 
   event.waitUntil(
-    Promise.all([
-      // Cache crítico
-      caches.open(INDEX_CACHE).then(cache => {
-        console.log('🔴 Cacheando archivos críticos...');
-        return Promise.allSettled(
-          CRITICAL_CACHE.map(url =>
-            cache.add(url).catch(err => {
-              console.error('❌ Error cacheando crítico:', url, err);
-            })
-          )
-        );
-      }),
-
-      // Cache general
-      caches.open(CACHE_NAME).then(cache => {
-        console.log('🟢 Cacheando archivos generales...');
-        return Promise.allSettled(
-          [...CRITICAL_CACHE, ...INITIAL_CACHE].map(url =>
-            cache.add(url).catch(err => {
-              console.warn('⚠️ No se pudo cachear:', url);
-            })
-          )
-        );
-      })
-    ])
-    .then(() => {
-      console.log('✅ Agenda lista para funcionar sin internet');
-      self.skipWaiting();
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('⬇️ Descargando archivos...');
+      // Usamos Promise.all (no Settled) para saber si algo falla.
+      // Si un archivo no existe, la instalación fallará (y verás el error en consola),
+      // lo cual es bueno para debugging.
+      return cache.addAll(APP_SHELL).catch(err => {
+         console.error("❌ Error crítico cacheando archivos. Verifica las rutas:", err);
+      });
     })
   );
 });
 
 // ========================================
-// ACTIVATE - Limpiar cachés antiguas
+// ACTIVATE - Limpiar versiones viejas
 // ========================================
 self.addEventListener('activate', event => {
-  console.log('🔄 [SW] Activando Agenda...');
-
+  console.log('🔄 [SW] Activando...');
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
         keys.map(key => {
-          if (key !== CACHE_NAME && key !== INDEX_CACHE) {
-            console.log('🗑️ Eliminando caché antigua:', key);
+          if (key !== CACHE_NAME) {
+            console.log('🗑️ Borrando caché vieja:', key);
             return caches.delete(key);
           }
         })
       )
-    ).then(() => {
-      console.log('✅ SW activo');
-      return self.clients.claim();
+    ).then(() => self.clients.claim())
+  );
+});
+
+// ========================================
+// FETCH - ESTRATEGIA: CACHE FIRST, FALLBACK NETWORK
+// ========================================
+self.addEventListener('fetch', event => {
+  // Solo interceptamos peticiones GET
+  if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+
+  // Estrategia: "Cache First" (Primero caché, luego red)
+  // Esto hace que la app sea instantánea y funcione offline sí o sí.
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      // 1. Si está en caché, lo devolvemos INMEDIATAMENTE
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      // 2. Si no está en caché, intentamos descargarlo (Red)
+      return fetch(event.request)
+        .then(networkResponse => {
+          // Verificamos que la respuesta sea válida
+          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+            return networkResponse;
+          }
+
+          // 3. Si la red responde bien, guardamos una copia para la próxima
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+
+          return networkResponse;
+        })
+        .catch(() => {
+          // 4. Si falló la red y no estaba en caché (Modo Offline total para algo nuevo)
+          
+          // Si la petición era para una página HTML, podemos devolver el index o una página offline
+          if (event.request.headers.get('accept').includes('text/html')) {
+             return caches.match('./index.html');
+          }
+        });
     })
   );
 });
-
-// ========================================
-// FETCH - Estrategias inteligentes
-// ========================================
-self.addEventListener('fetch', event => {
-  const req = event.request;
-  const url = new URL(req.url);
-
-  // No cachear POST/PUT/DELETE
-  if (req.method !== 'GET') {
-    event.respondWith(fetch(req));
-    return;
-  }
-
-  // 1) index.html → CACHE FIRST
-  if (url.pathname.endsWith('index.html') || url.pathname === '/' || url.pathname === '/agenda/') {
-    event.respondWith(
-      caches.match('index.html', { cacheName: INDEX_CACHE })
-        .then(cached => cached || fetch(req))
-        .catch(() => caches.match('index.html'))
-    );
-    return;
-  }
-
-  // 2) Otros archivos → NETWORK FIRST con fallback a caché
-  event.respondWith(
-    fetch(req)
-      .then(res => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(req, clone));
-        return res;
-      })
-      .catch(() => caches.match(req))
-  );
-});
-
-// ========================================
-// MENSAJES - Comunicación con la app
-// ========================================
-self.addEventListener('message', event => {
-  const { type } = event.data || {};
-
-  if (type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-
-  if (type === 'CLEAR_CACHE') {
-    caches.delete(CACHE_NAME).then(() => {
-      console.log('🗑️ Caché limpiada');
-    });
-  }
-
-  if (type === 'GET_OFFLINE_STATUS') {
-    event.ports[0].postMessage({
-      offline: true,
-      cacheVersion: CACHE_VERSION
-    });
-  }
-});
-
-console.log('✅ Service Worker de Agenda cargado');
